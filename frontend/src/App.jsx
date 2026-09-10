@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
@@ -11,6 +11,7 @@ import WatchlistPage from "./pages/WatchlistPage";
 import AlertsPage from "./pages/AlertsPage";
 import RegistryPage from "./pages/RegistryPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
+import AlertToastNotification from "./components/AlertToastNotification";
 
 export default function App() {
   const [view, setView] = useState("landing"); // "landing" | "login" | "forbidden" | "app"
@@ -51,7 +52,10 @@ export default function App() {
 
   // Authenticated Command Grid
   return (
-    <div className="h-screen w-screen bg-[#0a0e14] text-[#e6edf5] flex flex-col overflow-hidden">
+    <div className="h-screen w-screen bg-[#0a0e14] text-[#e6edf5] flex flex-col overflow-hidden relative">
+      {/* Realtime Floating Toast for Incoming Alerts */}
+      <AlertToastNotification onInspectAlert={() => setActivePage("alerts")} />
+
       {/* Navbar */}
       <Navbar
         activePage={activePage}
