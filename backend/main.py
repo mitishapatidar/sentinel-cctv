@@ -1,10 +1,20 @@
 ﻿import os
 import json
 import urllib.request
+from pathlib import Path
 from typing import List, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# Auto-load .env
+env_path = Path(__file__).resolve().parent.parent / ".env"
+if env_path.exists():
+    with open(env_path, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip() and not line.startswith("#") and "=" in line:
+                k, v = line.strip().split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
 
 app = FastAPI(
     title="SENTINEL // Gujarat Police CCTV Intelligence API",
@@ -12,7 +22,6 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,7 +33,6 @@ app.add_middleware(
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://splqtcnmbxjojxjeauzt.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
-# WebSocket Connection Manager
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -57,7 +65,6 @@ def health_check():
 
 @app.get("/api/cameras")
 def get_cameras():
-    """Returns all 30 onboarded cameras from Supabase."""
     url = f"{SUPABASE_URL}/rest/v1/cameras?select=*"
     headers = {
         "apikey": SUPABASE_KEY,
@@ -69,7 +76,6 @@ def get_cameras():
 
 @app.get("/api/watchlist")
 def get_watchlist():
-    """Returns active watchlist targets."""
     url = f"{SUPABASE_URL}/rest/v1/watchlist?select=*"
     headers = {
         "apikey": SUPABASE_KEY,
@@ -81,7 +87,6 @@ def get_watchlist():
 
 @app.get("/api/alerts")
 def get_alerts():
-    """Returns surveillance alerts."""
     url = f"{SUPABASE_URL}/rest/v1/alerts?select=*&order=created_at.desc"
     headers = {
         "apikey": SUPABASE_KEY,
@@ -93,10 +98,6 @@ def get_alerts():
 
 @app.get("/api/vehicles/track")
 def track_vehicle(plate: str = Query(..., description="Vehicle registration plate e.g. GJ-05-AB-1234")):
-    """
-    Mandatory Evaluation Endpoint:
-    Traces and returns complete route traversed by designated vehicle across Gujarat network.
-    """
     clean_plate = plate.strip().upper()
     return {
         "plate": clean_plate,
@@ -154,7 +155,6 @@ class DetectionPayload(BaseModel):
 
 @app.post("/api/anpr/simulate-detection")
 async def trigger_anpr_detection(payload: DetectionPayload):
-    """Triggers real-time alert test case and broadcasts via WebSocket."""
     alert_event = {
         "event": "WATCHLIST_MATCH",
         "plate": payload.plate_number,

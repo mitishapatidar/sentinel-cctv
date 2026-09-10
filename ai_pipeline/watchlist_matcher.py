@@ -1,6 +1,16 @@
 ﻿import os
 import json
 import urllib.request
+from pathlib import Path
+
+# Auto-load .env if present
+env_path = Path(__file__).resolve().parent.parent / ".env"
+if env_path.exists():
+    with open(env_path, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip() and not line.startswith("#") and "=" in line:
+                k, v = line.strip().split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://splqtcnmbxjojxjeauzt.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
