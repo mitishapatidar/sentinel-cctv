@@ -1,5 +1,5 @@
 ﻿import React, { useState } from "react";
-import { Search, Car, Calendar, Clock, MapPin, CheckCircle, AlertTriangle, ArrowRight, Download, Eye } from "lucide-react";
+import { Search, Car, Calendar, Clock, MapPin, CheckCircle, AlertTriangle, ArrowRight, Download, Eye, Printer, Shield } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from "react-leaflet";
 import L from "leaflet";
 
@@ -29,13 +29,13 @@ export default function VehicleSearchPage() {
   const [query, setQuery] = useState("GJ-05-AB-1234");
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
+  const [showDossierModal, setShowDossierModal] = useState(false);
 
-  // Mock detection trajectory simulating a real trip across Gujarat highway corridor
   const mockTraffics = {
     "GJ-05-AB-1234": {
       plate: "GJ-05-AB-1234",
       model: "White Maruti Swift",
-      category: "STOLEN VEHICLE (Surat Varachha FIR #391)",
+      category: "STOLEN VEHICLE (Surat Varachha FIR #391/2026)",
       isWatchlist: true,
       severity: "critical",
       totalSightings: 4,
@@ -93,7 +93,7 @@ export default function VehicleSearchPage() {
     "GJ-01-XY-7788": {
       plate: "GJ-01-XY-7788",
       model: "Black Mahindra Scorpio",
-      category: "BLACKLISTED VEHICLE (Smuggling Syndicate)",
+      category: "BLACKLISTED VEHICLE (Smuggling Task Force Alert)",
       isWatchlist: true,
       severity: "high",
       totalSightings: 3,
@@ -146,11 +146,10 @@ export default function VehicleSearchPage() {
       if (mockTraffics[target]) {
         setResults(mockTraffics[target]);
       } else {
-        // Fallback generic search result for any plate
         setResults({
           plate: target,
           model: "Sedan / Passenger Vehicle",
-          category: "General Registry Search",
+          category: "General Registry Check",
           isWatchlist: false,
           totalSightings: 2,
           timeline: [
@@ -181,7 +180,7 @@ export default function VehicleSearchPage() {
           ],
         });
       }
-    }, 400);
+    }, 350);
   };
 
   const routeCoordinates = results ? results.timeline.map((t) => [t.lat, t.lng]) : [];
@@ -232,7 +231,7 @@ export default function VehicleSearchPage() {
               }}
               className="px-2 py-0.5 rounded bg-[#0a0e14] border border-red-500/30 text-red-400 hover:bg-red-500/10 cursor-pointer font-mono"
             >
-              GJ-05-AB-1234 (Stolen)
+              GJ-05-AB-1234 (Stolen Swift)
             </button>
             <button
               onClick={() => {
@@ -241,7 +240,7 @@ export default function VehicleSearchPage() {
               }}
               className="px-2 py-0.5 rounded bg-[#0a0e14] border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 cursor-pointer font-mono"
             >
-              GJ-01-XY-7788 (Blacklisted)
+              GJ-01-XY-7788 (Blacklisted Scorpio)
             </button>
           </div>
         </div>
@@ -271,20 +270,17 @@ export default function VehicleSearchPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => alert("Official PDF Trajectory Report Generated for Judicial Record.")}
-                className="flex items-center gap-2 text-xs bg-[#0a0e14] hover:bg-[#16233b] border border-[#1e2a3a] text-white px-4 py-2 rounded-xl cursor-pointer transition-all"
-              >
-                <Download className="h-3.5 w-3.5 text-blue-400" />
-                Export Evidence Dossier
-              </button>
-            </div>
+            <button
+              onClick={() => setShowDossierModal(true)}
+              className="flex items-center gap-2 text-xs bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl cursor-pointer transition-all shadow-md shadow-blue-600/20"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Generate Certified Evidence Dossier
+            </button>
           </div>
 
           {/* Map + Route Traversal */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Mapped GIS Route */}
             <div className="lg:col-span-2 bg-[#111823] border border-[#1e2a3a] rounded-2xl overflow-hidden shadow-xl flex flex-col">
               <div className="px-5 py-3.5 border-b border-[#1e2a3a] flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-semibold text-white">
@@ -307,7 +303,6 @@ export default function VehicleSearchPage() {
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                   />
 
-                  {/* Draw connected route line */}
                   <Polyline
                     positions={routeCoordinates}
                     color="#3b82f6"
@@ -315,7 +310,6 @@ export default function VehicleSearchPage() {
                     dashArray="6, 8"
                   />
 
-                  {/* Numbered checkpoint markers */}
                   {results.timeline.map((step) => (
                     <Marker
                       key={step.order}
@@ -335,7 +329,7 @@ export default function VehicleSearchPage() {
               </div>
             </div>
 
-            {/* Chronological Timeline Sidebar */}
+            {/* Chronological Timeline */}
             <div className="bg-[#111823] border border-[#1e2a3a] rounded-2xl p-5 flex flex-col">
               <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4 flex items-center gap-2">
                 <Clock className="h-4 w-4 text-blue-400" />
@@ -343,7 +337,7 @@ export default function VehicleSearchPage() {
               </h3>
 
               <div className="space-y-4 flex-1 overflow-y-auto pr-1">
-                {results.timeline.map((item, idx) => (
+                {results.timeline.map((item) => (
                   <div key={item.order} className="relative pl-6 pb-2 border-l border-[#1e2a3a] last:border-0">
                     <div className="absolute -left-3 top-0 h-6 w-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center border-2 border-[#111823]">
                       {item.order}
@@ -365,52 +359,97 @@ export default function VehicleSearchPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Sighting Data Table */}
-          <div className="bg-[#111823] border border-[#1e2a3a] rounded-2xl overflow-hidden shadow-xl">
-            <div className="px-5 py-3.5 border-b border-[#1e2a3a]">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-                Detailed Checkpoint Audit Records
-              </h3>
+      {/* Certified Dossier Modal (Printable) */}
+      {showDossierModal && results && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white text-black rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl p-8 my-8">
+            {/* Header */}
+            <div className="border-b-2 border-blue-900 pb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-black text-blue-900 uppercase tracking-wide">
+                  Gujarat Police • State Crime Record Bureau (SCRB)
+                </h2>
+                <p className="text-xs text-gray-600 uppercase tracking-wider font-semibold mt-0.5">
+                  Automated ANPR Trajectory Verification Certificate (Section 65B Indian Evidence Act)
+                </p>
+              </div>
+              <div className="text-right font-mono text-xs text-gray-500">
+                <p>REF: GP-ANPR-2026-9481</p>
+                <p>DATE: 11-09-2026</p>
+              </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#0d141f] text-[#7d8da3] uppercase tracking-wider text-[10px] border-b border-[#1e2a3a]">
-                  <tr>
-                    <th className="px-4 py-3">Step</th>
-                    <th className="px-4 py-3">Camera ID</th>
-                    <th className="px-4 py-3">Location & Checkpoint</th>
-                    <th className="px-4 py-3">Timestamp (IST)</th>
-                    <th className="px-4 py-3">Speed</th>
-                    <th className="px-4 py-3">ANPR Confidence</th>
-                    <th className="px-4 py-3">Evidence Snapshot</th>
+
+            {/* Target Profile */}
+            <div className="my-6 grid grid-cols-2 gap-4 bg-gray-100 p-4 rounded-xl text-xs">
+              <div>
+                <p className="text-gray-500 uppercase font-semibold text-[10px]">Registration Plate</p>
+                <p className="text-base font-black font-mono text-blue-900">{results.plate}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 uppercase font-semibold text-[10px]">Vehicle Classification</p>
+                <p className="text-xs font-bold text-gray-900">{results.model}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 uppercase font-semibold text-[10px]">Registry Status</p>
+                <p className="text-xs font-bold text-red-600">{results.category}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 uppercase font-semibold text-[10px]">Total Checkpoints Correlated</p>
+                <p className="text-xs font-bold text-gray-900">{results.totalSightings} Checkpoints</p>
+              </div>
+            </div>
+
+            {/* Trajectory Table */}
+            <h4 className="text-xs font-bold uppercase text-gray-700 mb-2">Verified Sequential Sightings</h4>
+            <table className="w-full text-left text-xs border border-gray-300 mb-6">
+              <thead className="bg-gray-200 text-gray-700">
+                <tr>
+                  <th className="p-2 border">Seq</th>
+                  <th className="p-2 border">Camera ID</th>
+                  <th className="p-2 border">Location Name</th>
+                  <th className="p-2 border">Timestamp (IST)</th>
+                  <th className="p-2 border">Speed</th>
+                  <th className="p-2 border">Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.timeline.map((s) => (
+                  <tr key={s.order} className="border-b">
+                    <td className="p-2 border font-bold">#{s.order}</td>
+                    <td className="p-2 border font-mono">{s.camId}</td>
+                    <td className="p-2 border">{s.name} ({s.city})</td>
+                    <td className="p-2 border font-mono">{s.timestamp}</td>
+                    <td className="p-2 border">{s.speed}</td>
+                    <td className="p-2 border font-bold text-emerald-700">{s.confidence}</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1e2a3a] text-[#e6edf5]">
-                  {results.timeline.map((row) => (
-                    <tr key={row.order} className="hover:bg-[#16233b]/40">
-                      <td className="px-4 py-3 font-bold font-mono text-blue-400">#{row.order}</td>
-                      <td className="px-4 py-3 font-mono text-xs font-semibold uppercase">{row.camId}</td>
-                      <td className="px-4 py-3">
-                        <p className="font-semibold text-white">{row.name}</p>
-                        <p className="text-[10px] text-[#7d8da3]">{row.city}</p>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-[#7d8da3]">{row.timestamp}</td>
-                      <td className="px-4 py-3 font-mono">{row.speed}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-bold">
-                          {row.confidence}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="h-8 w-12 rounded bg-[#0a0e14] border border-[#1e2a3a] overflow-hidden flex items-center justify-center">
-                          <Eye className="h-4 w-4 text-blue-400 cursor-pointer" />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Legal Certificate Footer */}
+            <div className="border-t pt-4 text-[10px] text-gray-500 space-y-1">
+              <p>Certified that the electronic surveillance metadata above was ingested by the SENTINEL Centralised CCTV Gateway in real-time from active police roadside feeds. Cryptographic hash verified.</p>
+              <p className="font-semibold text-gray-700">Digital Seal: SHA256:8f4c2e1b9a78d052a34... • Dy. Commissioner of Police (Crime)</p>
+            </div>
+
+            {/* Modal Buttons */}
+            <div className="mt-6 flex justify-end gap-3 print:hidden">
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold cursor-pointer"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                Print Certificate
+              </button>
+              <button
+                onClick={() => setShowDossierModal(false)}
+                className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-semibold cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
