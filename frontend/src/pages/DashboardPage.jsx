@@ -6,6 +6,7 @@ import { supabase } from "../supabaseClient";
 import HlsPlayer from "../components/HlsPlayer";
 import { INITIAL_CAMERAS } from "../data/camerasData";
 import gujaratBorder from "../data/gujaratBorder.json";
+import { useLanguage } from "../context/LanguageContext";
 
 // Custom pin icons with glowing pulse
 const createCustomIcon = (color) => {
@@ -67,6 +68,7 @@ const GOOGLE_MAP_LAYERS = {
 };
 
 export default function DashboardPage({ setActivePage }) {
+  const { t } = useLanguage();
   const [cameras, setCameras] = useState(INITIAL_CAMERAS);
   const [selectedCamera, setSelectedCamera] = useState(null);
   const [mapType, setMapType] = useState("satellite"); // default: Google Satellite Hybrid
@@ -110,34 +112,15 @@ export default function DashboardPage({ setActivePage }) {
               <Globe className="h-3 w-3" /> Real Google Maps Engine
             </span>
           </div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Command Situational Dashboard</h1>
-          <p className="text-xs text-[#7d8da3] mt-0.5">Gujarat Police Statewide CCTV Surveillance • Real-time Feeds</p>
+          <h1 className="text-xl font-bold text-white tracking-wide">{t("commandDashboard")}</h1>
+          <p className="text-xs text-[#7d8da3] mt-0.5">{t("statewideSurveillance")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={async () => {
-              const testAlert = {
-                alert_code: `ALT-${Math.floor(100000 + Math.random() * 900000)}`,
-                alert_type: "Watchlist Match",
-                severity: "critical",
-                camera_id: "cam04",
-                title: "CRITICAL INTERCEPT: Stolen Maruti Swift GJ-05-AB-1234",
-                message: "ANPR match at 04 Paldi Circle, Ahmedabad (Lane 2). Local PCR unit dispatched.",
-                status: "pending",
-              };
-              await supabase.from("alerts").insert([testAlert]);
-              setStats((prev) => ({ ...prev, alertsToday: prev.alertsToday + 1, vehiclesTracked: prev.vehiclesTracked + 1 }));
-            }}
-            className="flex items-center gap-1.5 text-xs bg-red-600 hover:bg-red-500 text-white font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all shadow-md shadow-red-600/30"
-            title="Trigger live ANPR detection demo for evaluators"
-          >
-            <Radio className="h-3.5 w-3.5 animate-pulse" />
-            Simulate Live Intercept
-          </button>
-          <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-lg">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            All 30 Feeds Streaming
-          </span>
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[#1e2a3a] bg-[#0a0e14] shadow-inner">
+            <Radio className="h-4 w-4 text-emerald-400 animate-pulse" />
+            <span className="text-xs text-[#7d8da3]">{t("liveFeeds")}</span>
+            <span className="text-xs font-mono font-bold text-emerald-400">30/30 {t("online")}</span>
+          </div>
         </div>
       </div>
 
@@ -148,7 +131,7 @@ export default function DashboardPage({ setActivePage }) {
           <div className="px-5 py-3 border-b border-[#1e2a3a] flex flex-wrap items-center justify-between gap-3 bg-[#0d141f]">
             <div className="flex items-center gap-2 text-xs font-semibold text-white">
               <Layers className="h-4 w-4 text-blue-400" />
-              <span>Gujarat GIS Deployment Map (30 Target Cameras)</span>
+              <span>{t("deploymentMap")}</span>
             </div>
 
             {/* Google Map Layer Selector */}
@@ -172,7 +155,7 @@ export default function DashboardPage({ setActivePage }) {
 
               <div className="hidden sm:flex items-center gap-2 text-[11px] text-[#7d8da3] pl-2 border-l border-[#1e2a3a]">
                 <span className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> Live Feeds
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> {t("liveFeedsCount")}
                 </span>
               </div>
             </div>
@@ -232,7 +215,7 @@ export default function DashboardPage({ setActivePage }) {
                           onClick={() => setSelectedCamera(cam)}
                           className="mt-2.5 w-full text-xs bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg font-semibold cursor-pointer transition-colors shadow-sm"
                         >
-                          Watch Live CCTV Feed
+                          {t("watchLiveCctv")}
                         </button>
                       </div>
                     </Popup>
@@ -256,48 +239,48 @@ export default function DashboardPage({ setActivePage }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 rounded-xl bg-[#111823] border border-[#1e2a3a]">
               <div className="flex items-center justify-between text-[#7d8da3] mb-2">
-                <span className="text-xs uppercase tracking-wider font-semibold">Total Cameras</span>
+                <span className="text-xs uppercase tracking-wider font-semibold">{t("totalCameras")}</span>
                 <Radio className="h-4 w-4 text-blue-400" />
               </div>
               <p className="text-2xl font-extrabold font-mono text-white">{stats.total}</p>
-              <p className="text-[10px] text-[#7d8da3] mt-1">Government Onboarded</p>
+              <p className="text-[10px] text-[#7d8da3] mt-1">{t("govtOnboarded")}</p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#111823] border border-emerald-500/30 bg-emerald-500/5">
               <div className="flex items-center justify-between text-[#7d8da3] mb-2">
-                <span className="text-xs uppercase tracking-wider font-semibold">Live Feeds</span>
+                <span className="text-xs uppercase tracking-wider font-semibold">{t("liveFeedsCount")}</span>
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
               </div>
               <p className="text-2xl font-extrabold font-mono text-emerald-400">{stats.live}</p>
-              <p className="text-[10px] text-[#7d8da3] mt-1">HLS Relay Operational</p>
+              <p className="text-[10px] text-[#7d8da3] mt-1">{t("relayOperational")}</p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#111823] border border-amber-500/30 bg-amber-500/5">
               <div className="flex items-center justify-between text-[#7d8da3] mb-2">
-                <span className="text-xs uppercase tracking-wider font-semibold">Alerts Today</span>
+                <span className="text-xs uppercase tracking-wider font-semibold">{t("alertsToday")}</span>
                 <AlertTriangle className="h-4 w-4 text-amber-400" />
               </div>
               <p className="text-2xl font-extrabold font-mono text-amber-400">{stats.alertsToday}</p>
-              <p className="text-[10px] text-[#7d8da3] mt-1">Watchlist Matches</p>
+              <p className="text-[10px] text-[#7d8da3] mt-1">{t("watchlistMatches")}</p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#111823] border border-purple-500/30 bg-purple-500/5">
               <div className="flex items-center justify-between text-[#7d8da3] mb-2">
-                <span className="text-xs uppercase tracking-wider font-semibold">Tracked</span>
+                <span className="text-xs uppercase tracking-wider font-semibold">{t("trackedPlates")}</span>
                 <Car className="h-4 w-4 text-purple-400" />
               </div>
               <p className="text-2xl font-extrabold font-mono text-purple-400">{stats.vehiclesTracked}</p>
-              <p className="text-[10px] text-[#7d8da3] mt-1">ANPR Plates Processed</p>
+              <p className="text-[10px] text-[#7d8da3] mt-1">{t("anprProcessed")}</p>
             </div>
           </div>
 
           {/* Department Coverage Widget */}
           <div className="p-5 rounded-2xl bg-[#111823] border border-[#1e2a3a]">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Department Deployment</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4">{t("deptDeployment")}</h3>
             <div className="space-y-3 text-xs">
               <div>
                 <div className="flex justify-between text-[#7d8da3] mb-1">
-                  <span>City Police (Ahmedabad/Rajkot/Junagadh)</span>
+                  <span>{t("cityPolice")}</span>
                   <span className="font-mono text-white">12 Feeds</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
@@ -307,7 +290,7 @@ export default function DashboardPage({ setActivePage }) {
 
               <div>
                 <div className="flex justify-between text-[#7d8da3] mb-1">
-                  <span>Traffic Police & Toll Plazas</span>
+                  <span>{t("trafficPolice")}</span>
                   <span className="font-mono text-white">10 Feeds</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
@@ -317,7 +300,7 @@ export default function DashboardPage({ setActivePage }) {
 
               <div>
                 <div className="flex justify-between text-[#7d8da3] mb-1">
-                  <span>Highway Patrol & Transport</span>
+                  <span>{t("highwayPatrol")}</span>
                   <span className="font-mono text-white">5 Feeds</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
@@ -327,7 +310,7 @@ export default function DashboardPage({ setActivePage }) {
 
               <div>
                 <div className="flex justify-between text-[#7d8da3] mb-1">
-                  <span>Coastal Security & Gram Panchayat</span>
+                  <span>{t("coastalGram")}</span>
                   <span className="font-mono text-white">3 Feeds</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
@@ -340,14 +323,14 @@ export default function DashboardPage({ setActivePage }) {
           {/* Quick Action */}
           <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-600/10 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-white">Inspect Live Feeds</p>
-              <p className="text-[11px] text-[#7d8da3]">Switch to 30-camera multi-grid viewer</p>
+              <p className="text-xs font-semibold text-white">{t("inspectLiveFeeds")}</p>
+              <p className="text-[11px] text-[#7d8da3]">{t("switchMultiGrid")}</p>
             </div>
             <button
               onClick={() => setActivePage && setActivePage("cameras")}
               className="text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-all shadow-sm"
             >
-              Open Grid
+              {t("openGrid")}
             </button>
           </div>
         </div>
@@ -366,7 +349,7 @@ export default function DashboardPage({ setActivePage }) {
                 onClick={() => setSelectedCamera(null)}
                 className="text-xs bg-[#0a0e14] text-[#7d8da3] hover:text-white px-3 py-1.5 rounded-lg border border-[#1e2a3a] cursor-pointer"
               >
-                Close
+                {t("close")}
               </button>
             </div>
             <div className="h-80 w-full bg-black">
@@ -383,7 +366,7 @@ export default function DashboardPage({ setActivePage }) {
       {/* Surveillance Ticker at bottom */}
       <div className="mt-auto border-t border-[#1e2a3a] bg-[#111823] px-6 py-2.5 flex items-center gap-3">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/30">
-          <Bell className="h-3 w-3" /> Live ANPR Feed
+          <Bell className="h-3 w-3" /> {t("liveAnprFeed")}
         </span>
         <div className="text-xs text-[#7d8da3] truncate flex items-center gap-6">
           <span>🚨 <strong className="text-white">GJ-05-AB-1234</strong> (Stolen Swift) detected at <strong>Paldi Circle (CAM04)</strong> - Alert Dispatched</span>
