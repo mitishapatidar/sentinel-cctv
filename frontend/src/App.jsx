@@ -88,7 +88,7 @@ export default function App() {
           {activePage === "vehicle-search" && <VehicleSearchPage />}
           {activePage === "watchlist" && <WatchlistPage />}
           {activePage === "alerts" && <AlertsPage />}
-          {activePage === "registry" && <RegistryPage />}
+          {activePage === "registry" && <RegistryPage setActivePage={setActivePage} />}
           {activePage === "audit-logs" && <AuditLogsPage />}
         </main>
       </div>
