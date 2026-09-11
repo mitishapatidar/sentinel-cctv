@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 import { AlertCircle, RefreshCw, Radio, Play } from "lucide-react";
 
@@ -47,22 +47,24 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId }) {
           setLoading(false);
           if (videoRef.current) {
             videoRef.current.muted = true;
-            videoRef.current.play().catch(() => {});
+            videoRef.current.play().catch((err) => console.log("Autoplay caught:", err));
           }
         });
 
         hls.on(Hls.Events.ERROR, (event, data) => {
           if (data.fatal) {
-            // Switch to surveillance video loop so video never breaks
-            console.log(`[HLS Gateway] Stream restricted for ${cameraId}, engaging surveillance relay.`);
-            setUsingFallbackVideo(true);
-            if (videoRef.current) {
-              videoRef.current.src = fallbackUrl;
-              videoRef.current.loop = true;
-              videoRef.current.muted = true;
-              videoRef.current.play().catch(() => {});
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                hls.recoverMediaError();
+                break;
+              default:
+                hls.destroy();
+                setLoading(false);
+                break;
             }
-            setLoading(false);
           }
         });
       } else if (videoRef.current) {
