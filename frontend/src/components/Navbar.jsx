@@ -2,7 +2,16 @@ import React, { useState, useRef, useEffect } from "react";
 import { Shield, Bell, Radio, LogOut, User, Menu, Globe, ChevronDown, Check } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
-export default function Navbar({ activePage, setActivePage, user, onLogout, onToggleMobileMenu, liveCount = 30, alertCount = 3 }) {
+export default function Navbar({ 
+  activePage, 
+  setActivePage, 
+  user, 
+  onLogout, 
+  sidebarOpen, 
+  onToggleSidebar, 
+  liveCount = 30, 
+  alertCount = 3 
+}) {
   const { language, setLanguage, t } = useLanguage();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langMenuRef = useRef(null);
@@ -30,13 +39,6 @@ export default function Navbar({ activePage, setActivePage, user, onLogout, onTo
     <header className="sticky top-0 z-30 min-h-[4.5rem] py-2 border-b border-[#1e2a3a] bg-[#111823]/95 backdrop-blur px-3 sm:px-6 flex items-center justify-between gap-3">
       {/* Brand Header */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={onToggleMobileMenu}
-          className="md:hidden p-2 rounded-lg bg-[#0a0e14] border border-[#1e2a3a] text-gray-400 hover:text-white cursor-pointer"
-        >
-          <Menu className="h-4 w-4" />
-        </button>
-
         {/* Gujarat Police Emblem Badge with Satyameva Jayate */}
         <div className="h-11 w-11 rounded-xl bg-gradient-to-b from-blue-900/60 to-blue-950/90 border border-blue-500/40 flex flex-col items-center justify-center text-blue-400 shrink-0 shadow-md shadow-blue-950/60">
           <Shield className="h-5 w-5 text-amber-400 fill-amber-400/20" />
