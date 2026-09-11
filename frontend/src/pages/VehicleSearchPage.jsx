@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Search, Car, Calendar, Clock, MapPin, CheckCircle, AlertTriangle, ArrowRight, Download, Eye, Printer, Shield } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, Popup, GeoJSON } from "react-leaflet";
 import L from "leaflet";
+import gujaratBorder from "../data/gujaratBorder.json";
 
 const createNumberedIcon = (number, isAlert = false) => {
   return L.divIcon({
@@ -303,6 +304,18 @@ export default function VehicleSearchPage() {
                     url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
                     subdomains={["0", "1", "2", "3"]}
                     maxZoom={20}
+                  />
+
+                  {/* Gujarat State Border Light Black Outline */}
+                  <GeoJSON
+                    data={gujaratBorder}
+                    style={{
+                      color: "#18181b",
+                      weight: 2.2,
+                      opacity: 0.85,
+                      fillColor: "#0284c7",
+                      fillOpacity: 0.03,
+                    }}
                   />
 
                   <Polyline

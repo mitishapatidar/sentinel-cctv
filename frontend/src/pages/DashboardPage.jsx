@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import { Radio, Car, Bell, Shield, Video, Layers, AlertTriangle, Eye, CheckCircle2, Map as MapIcon, Globe } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import HlsPlayer from "../components/HlsPlayer";
 import { INITIAL_CAMERAS } from "../data/camerasData";
+import gujaratBorder from "../data/gujaratBorder.json";
 
 // Custom pin icons with glowing pulse
 const createCustomIcon = (color) => {
@@ -25,7 +26,7 @@ const greenIcon = createCustomIcon("#10b981");
 const amberIcon = createCustomIcon("#f59e0b");
 const redIcon = createCustomIcon("#ef4444");
 
-// Real Google Maps tile layers (No API key watermark, full HD Gujarat coverage)
+// Real Google Maps & OpenStreetMap tile layers (No API key watermark, full HD Gujarat coverage)
 const GOOGLE_MAP_LAYERS = {
   satellite: {
     id: "satellite",
@@ -35,6 +36,15 @@ const GOOGLE_MAP_LAYERS = {
     subdomains: ["0", "1", "2", "3"],
     attribution: "&copy; Google Maps Satellite",
     maxZoom: 20,
+  },
+  osm: {
+    id: "osm",
+    label: "OpenStreetMap",
+    icon: "🏙️",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    subdomains: ["a", "b", "c"],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
   },
   streets: {
     id: "streets",
@@ -185,6 +195,18 @@ export default function DashboardPage({ setActivePage }) {
                 maxZoom={activeLayer.maxZoom}
               />
 
+              {/* Gujarat State Border Light Black Outline */}
+              <GeoJSON
+                data={gujaratBorder}
+                style={{
+                  color: "#18181b",
+                  weight: 2.2,
+                  opacity: 0.85,
+                  fillColor: "#0284c7",
+                  fillOpacity: 0.03,
+                }}
+              />
+
               {cameras.map((cam) => {
                 const lat = cam.lat || 22.25;
                 const lng = cam.lng || 71.19;
@@ -219,9 +241,9 @@ export default function DashboardPage({ setActivePage }) {
               })}
             </MapContainer>
 
-            {/* Google Maps Brand Badge */}
+            {/* Map Brand Badge */}
             <div className="absolute bottom-2 left-2 z-[400] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-[10px] text-white/80 flex items-center gap-1.5 pointer-events-none">
-              <span className="font-semibold text-white">Google Maps</span>
+              <span className="font-semibold text-white">{activeLayer.label}</span>
               <span className="text-white/40">•</span>
               <span>Gujarat State GIS</span>
             </div>
