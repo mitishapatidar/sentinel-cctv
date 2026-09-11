@@ -88,15 +88,6 @@ export default function Sidebar({ activePage, setActivePage, isOpen = true, onTo
             );
           })}
         </nav>
-
-        {/* Footer System Status: Full status when open, Centered pulsing green dot when collapsed */}
-        <div className={`border-t border-[#1e2a3a] bg-[#0a0e14] transition-all ${isOpen ? "p-4" : "p-3 flex justify-center"}`}>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-            {isOpen && <span className="text-xs font-semibold text-white truncate">{t("networkHealthy")}</span>}
-          </div>
-          {isOpen && <p className="text-[10px] text-[#7d8da3] mt-1 truncate">{t("relayGateway")}</p>}
-        </div>
       </aside>
     </>
   );
