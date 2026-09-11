@@ -1,11 +1,12 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Server, Search, Download, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { INITIAL_CAMERAS } from "../data/camerasData";
 
 export default function RegistryPage() {
-  const [cameras, setCameras] = useState([]);
+  const [cameras, setCameras] = useState(INITIAL_CAMERAS);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadRegistry = async () => {

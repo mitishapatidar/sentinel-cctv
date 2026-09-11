@@ -4,6 +4,7 @@ import L from "leaflet";
 import { Radio, Car, Bell, Shield, Video, Layers, AlertTriangle, Eye, CheckCircle2 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import HlsPlayer from "../components/HlsPlayer";
+import { INITIAL_CAMERAS } from "../data/camerasData";
 
 // Custom pin icons
 const createCustomIcon = (color) => {
@@ -27,7 +28,7 @@ const amberIcon = createCustomIcon("#f59e0b");
 const redIcon = createCustomIcon("#ef4444");
 
 export default function DashboardPage({ setActivePage }) {
-  const [cameras, setCameras] = useState([]);
+  const [cameras, setCameras] = useState(INITIAL_CAMERAS);
   const [selectedCamera, setSelectedCamera] = useState(null);
   const [stats, setStats] = useState({
     total: 30,
