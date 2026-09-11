@@ -1,35 +1,65 @@
 import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-import { Radio, Car, Bell, Shield, Video, Layers, AlertTriangle, Eye, CheckCircle2 } from "lucide-react";
+import { Radio, Car, Bell, Shield, Video, Layers, AlertTriangle, Eye, CheckCircle2, Map as MapIcon, Globe } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import HlsPlayer from "../components/HlsPlayer";
 import { INITIAL_CAMERAS } from "../data/camerasData";
 
-// Custom pin icons
+// Custom pin icons with glowing pulse
 const createCustomIcon = (color) => {
   return L.divIcon({
     className: "custom-marker",
-    html: `<div style="
-      background-color: ${color};
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 2px solid white;
-      box-shadow: 0 0 10px ${color};
-    "></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+    html: `
+      <div style="position: relative; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background-color: ${color}; opacity: 0.45; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+        <div style="background-color: ${color}; width: 13px; height: 13px; border-radius: 50%; border: 2.5px solid #ffffff; box-shadow: 0 0 10px ${color}, 0 2px 4px rgba(0,0,0,0.6); position: relative; z-index: 2;"></div>
+      </div>
+    `,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
   });
 };
 
-const greenIcon = createCustomIcon("#22c55e");
+const greenIcon = createCustomIcon("#10b981");
 const amberIcon = createCustomIcon("#f59e0b");
 const redIcon = createCustomIcon("#ef4444");
+
+// Real Google Maps tile layers (No API key watermark, full HD Gujarat coverage)
+const GOOGLE_MAP_LAYERS = {
+  satellite: {
+    id: "satellite",
+    label: "Google Satellite",
+    icon: "🛰️",
+    url: "https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
+    attribution: "&copy; Google Maps Satellite",
+    maxZoom: 20,
+  },
+  streets: {
+    id: "streets",
+    label: "Google Roads",
+    icon: "🗺️",
+    url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
+    attribution: "&copy; Google Maps",
+    maxZoom: 20,
+  },
+  terrain: {
+    id: "terrain",
+    label: "Google Terrain",
+    icon: "🏔️",
+    url: "https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
+    attribution: "&copy; Google Maps Terrain",
+    maxZoom: 20,
+  },
+};
 
 export default function DashboardPage({ setActivePage }) {
   const [cameras, setCameras] = useState(INITIAL_CAMERAS);
   const [selectedCamera, setSelectedCamera] = useState(null);
+  const [mapType, setMapType] = useState("satellite"); // default: Google Satellite Hybrid
   const [stats, setStats] = useState({
     total: 30,
     live: 30,
@@ -40,20 +70,36 @@ export default function DashboardPage({ setActivePage }) {
   useEffect(() => {
     // Fetch real cameras from Supabase
     const loadCameras = async () => {
-      const { data, error } = await supabase.from("cameras").select("*");
-      if (data && data.length > 0) {
-        setCameras(data);
-        setStats((prev) => ({ ...prev, total: data.length, live: data.length }));
+      try {
+        const { data, error } = await supabase.from("cameras").select("*");
+        if (!error && data && data.length > 0) {
+          setCameras(data);
+          setStats((prev) => ({ ...prev, total: data.length, live: data.length }));
+        } else {
+          setCameras(INITIAL_CAMERAS);
+        }
+      } catch (err) {
+        setCameras(INITIAL_CAMERAS);
       }
     };
     loadCameras();
   }, []);
 
+  const activeLayer = GOOGLE_MAP_LAYERS[mapType];
+
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto">
+    <div className="flex-1 flex flex-col overflow-y-auto bg-[#0a0e14]">
       {/* Top Banner */}
       <div className="border-b border-[#1e2a3a] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#111823]">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Live GIS Command
+            </span>
+            <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+              <Globe className="h-3 w-3" /> Real Google Maps Engine
+            </span>
+          </div>
           <h1 className="text-xl font-bold text-white tracking-wide">Command Situational Dashboard</h1>
           <p className="text-xs text-[#7d8da3] mt-0.5">Gujarat Police Statewide CCTV Surveillance • Real-time Feeds</p>
         </div>
@@ -89,31 +135,54 @@ export default function DashboardPage({ setActivePage }) {
       <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* GIS Map Section */}
         <div className="lg:col-span-2 flex flex-col bg-[#111823] border border-[#1e2a3a] rounded-2xl overflow-hidden shadow-xl">
-          <div className="px-5 py-3.5 border-b border-[#1e2a3a] flex items-center justify-between">
+          <div className="px-5 py-3 border-b border-[#1e2a3a] flex flex-wrap items-center justify-between gap-3 bg-[#0d141f]">
             <div className="flex items-center gap-2 text-xs font-semibold text-white">
               <Layers className="h-4 w-4 text-blue-400" />
               <span>Gujarat GIS Deployment Map (30 Target Cameras)</span>
             </div>
-            <div className="flex items-center gap-3 text-[11px] text-[#7d8da3]">
-              <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-emerald-400"></span> Live
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-amber-400"></span> Checkpoint
-              </span>
+
+            {/* Google Map Layer Selector */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center bg-[#0a0e14] p-0.5 rounded-lg border border-[#1e2a3a]">
+                {Object.values(GOOGLE_MAP_LAYERS).map((layer) => (
+                  <button
+                    key={layer.id}
+                    onClick={() => setMapType(layer.id)}
+                    className={`flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                      mapType === layer.id
+                        ? "bg-blue-600 text-white font-semibold shadow-sm"
+                        : "text-[#7d8da3] hover:text-white hover:bg-[#16233b]"
+                    }`}
+                  >
+                    <span>{layer.icon}</span>
+                    <span>{layer.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="hidden sm:flex items-center gap-2 text-[11px] text-[#7d8da3] pl-2 border-l border-[#1e2a3a]">
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> Live Feeds
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="h-[500px] w-full relative z-0">
+          <div className="h-[520px] w-full relative z-0">
             <MapContainer
-              center={[22.3, 71.5]}
+              center={[22.4, 71.8]}
               zoom={7}
+              minZoom={6}
+              maxZoom={20}
               style={{ height: "100%", width: "100%", backgroundColor: "#0a0e14" }}
               scrollWheelZoom={true}
             >
               <TileLayer
-                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                key={activeLayer.id}
+                attribution={activeLayer.attribution}
+                url={activeLayer.url}
+                subdomains={activeLayer.subdomains}
+                maxZoom={activeLayer.maxZoom}
               />
 
               {cameras.map((cam) => {
@@ -129,14 +198,19 @@ export default function DashboardPage({ setActivePage }) {
                     }}
                   >
                     <Popup className="custom-popup">
-                      <div className="p-2 text-[#0a0e14]">
-                        <p className="font-bold text-xs">{cam.name}</p>
-                        <p className="text-[10px] text-gray-600">{cam.city} • {cam.department}</p>
+                      <div className="p-3 text-[#0a0e14] min-w-[200px]">
+                        <div className="flex items-center justify-between border-b pb-1 mb-1">
+                          <span className="text-[10px] font-mono font-bold uppercase text-blue-700">{cam.id}</span>
+                          <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded">ONLINE</span>
+                        </div>
+                        <p className="font-bold text-xs text-gray-900 mt-1">{cam.name}</p>
+                        <p className="text-[10px] text-gray-600 mt-0.5">{cam.city} Range • {cam.department}</p>
+                        <p className="text-[9px] font-mono text-gray-500 mt-0.5">GPS: {lat.toFixed(4)}, {lng.toFixed(4)}</p>
                         <button
                           onClick={() => setSelectedCamera(cam)}
-                          className="mt-2 w-full text-[10px] bg-blue-600 text-white py-1 rounded font-semibold cursor-pointer"
+                          className="mt-2.5 w-full text-xs bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg font-semibold cursor-pointer transition-colors shadow-sm"
                         >
-                          Open Live Feed
+                          Watch Live CCTV Feed
                         </button>
                       </div>
                     </Popup>
@@ -144,6 +218,13 @@ export default function DashboardPage({ setActivePage }) {
                 );
               })}
             </MapContainer>
+
+            {/* Google Maps Brand Badge */}
+            <div className="absolute bottom-2 left-2 z-[400] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-[10px] text-white/80 flex items-center gap-1.5 pointer-events-none">
+              <span className="font-semibold text-white">Google Maps</span>
+              <span className="text-white/40">•</span>
+              <span>Gujarat State GIS</span>
+            </div>
           </div>
         </div>
 
@@ -241,8 +322,8 @@ export default function DashboardPage({ setActivePage }) {
               <p className="text-[11px] text-[#7d8da3]">Switch to 30-camera multi-grid viewer</p>
             </div>
             <button
-              onClick={() => setActivePage("cameras")}
-              className="text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-all"
+              onClick={() => setActivePage && setActivePage("cameras")}
+              className="text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-all shadow-sm"
             >
               Open Grid
             </button>
@@ -283,9 +364,9 @@ export default function DashboardPage({ setActivePage }) {
           <Bell className="h-3 w-3" /> Live ANPR Feed
         </span>
         <div className="text-xs text-[#7d8da3] truncate flex items-center gap-6">
-          <span>?? <strong className="text-white">GJ-05-AB-1234</strong> (Stolen Swift) detected at <strong>Paldi Circle (CAM04)</strong> - Alert Dispatched</span>
+          <span>🚨 <strong className="text-white">GJ-05-AB-1234</strong> (Stolen Swift) detected at <strong>Paldi Circle (CAM04)</strong> - Alert Dispatched</span>
           <span>•</span>
-          <span>?? <strong className="text-white">GJ-01-XY-7788</strong> (Blacklisted SUV) checked at <strong>Adalaj Tollnaka (CAM12)</strong></span>
+          <span>⚠️ <strong className="text-white">GJ-01-XY-7788</strong> (Blacklisted SUV) checked at <strong>Adalaj Tollnaka (CAM12)</strong></span>
         </div>
       </div>
     </div>

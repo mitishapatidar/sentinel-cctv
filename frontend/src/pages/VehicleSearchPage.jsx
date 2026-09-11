@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Search, Car, Calendar, Clock, MapPin, CheckCircle, AlertTriangle, ArrowRight, Download, Eye, Printer, Shield } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -299,8 +299,10 @@ export default function VehicleSearchPage() {
                   style={{ height: "100%", width: "100%", backgroundColor: "#0a0e14" }}
                 >
                   <TileLayer
-                    attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; Google Maps'
+                    url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                    subdomains={["0", "1", "2", "3"]}
+                    maxZoom={20}
                   />
 
                   <Polyline
