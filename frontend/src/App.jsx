@@ -16,6 +16,7 @@ import AlertToastNotification from "./components/AlertToastNotification";
 export default function App() {
   const [view, setView] = useState("landing"); // "landing" | "login" | "forbidden" | "app"
   const [activePage, setActivePage] = useState("dashboard");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState({
     email: "patidarmitisha@gmail.com",
     role: "Dy. Commissioner (Admin)",
@@ -62,14 +63,23 @@ export default function App() {
         setActivePage={setActivePage}
         user={user}
         onLogout={handleLogout}
+        onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         liveCount={30}
         alertCount={3}
       />
 
       {/* Main Body */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Sidebar */}
-        <Sidebar activePage={activePage} setActivePage={setActivePage} />
+        <Sidebar
+          activePage={activePage}
+          setActivePage={(page) => {
+            setActivePage(page);
+            setMobileMenuOpen(false);
+          }}
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+        />
 
         {/* Page Content View */}
         <main className="flex-1 flex flex-col overflow-hidden">

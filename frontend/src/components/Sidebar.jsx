@@ -1,7 +1,7 @@
-﻿import React from "react";
+import React from "react";
 import { LayoutDashboard, Grid3X3, Car, ShieldAlert, Bell, Server, FileText, Settings, ShieldCheck } from "lucide-react";
 
-export default function Sidebar({ activePage, setActivePage }) {
+export default function Sidebar({ activePage, setActivePage, mobileOpen, onCloseMobile }) {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "cameras", label: "Camera Grid", icon: Grid3X3 },
@@ -13,7 +13,20 @@ export default function Sidebar({ activePage, setActivePage }) {
   ];
 
   return (
-    <aside className="w-64 border-r border-[#1e2a3a] bg-[#0d141f] flex flex-col shrink-0">
+    <>
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs md:hidden"
+        />
+      )}
+
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 border-r border-[#1e2a3a] bg-[#0d141f] flex flex-col shrink-0 transition-transform duration-200 ease-in-out ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
       <div className="p-4 border-b border-[#1e2a3a]">
         <span className="text-[11px] font-bold uppercase tracking-widest text-[#5c6b86]">Operations Menu</span>
       </div>
@@ -48,5 +61,6 @@ export default function Sidebar({ activePage, setActivePage }) {
         <p className="text-[10px] text-[#7d8da3]">VMS Relay Gateway: Active</p>
       </div>
     </aside>
+    </>
   );
 }

@@ -1,6 +1,7 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AlertTriangle, ShieldAlert, X, Eye, Bell } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { playAlertChime } from "../utils/audioAlert";
 
 export default function AlertToastNotification({ onInspectAlert }) {
   const [activeToast, setActiveToast] = useState(null);
@@ -14,6 +15,7 @@ export default function AlertToastNotification({ onInspectAlert }) {
         { event: "INSERT", schema: "public", table: "alerts" },
         (payload) => {
           console.log("Realtime Alert Triggered:", payload.new);
+          playAlertChime(payload.new?.severity || "critical");
           setActiveToast(payload.new);
         }
       )

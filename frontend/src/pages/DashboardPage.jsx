@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { Radio, Car, Bell, Shield, Video, Layers, AlertTriangle, Eye, CheckCircle2 } from "lucide-react";
@@ -57,6 +57,26 @@ export default function DashboardPage({ setActivePage }) {
           <p className="text-xs text-[#7d8da3] mt-0.5">Gujarat Police Statewide CCTV Surveillance • Real-time Feeds</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={async () => {
+              const testAlert = {
+                alert_code: `ALT-${Math.floor(100000 + Math.random() * 900000)}`,
+                alert_type: "Watchlist Match",
+                severity: "critical",
+                camera_id: "cam04",
+                title: "CRITICAL INTERCEPT: Stolen Maruti Swift GJ-05-AB-1234",
+                message: "ANPR match at 04 Paldi Circle, Ahmedabad (Lane 2). Local PCR unit dispatched.",
+                status: "pending",
+              };
+              await supabase.from("alerts").insert([testAlert]);
+              setStats((prev) => ({ ...prev, alertsToday: prev.alertsToday + 1, vehiclesTracked: prev.vehiclesTracked + 1 }));
+            }}
+            className="flex items-center gap-1.5 text-xs bg-red-600 hover:bg-red-500 text-white font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all shadow-md shadow-red-600/30"
+            title="Trigger live ANPR detection demo for evaluators"
+          >
+            <Radio className="h-3.5 w-3.5 animate-pulse" />
+            Simulate Live Intercept
+          </button>
           <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-lg">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
             All 30 Feeds Streaming
