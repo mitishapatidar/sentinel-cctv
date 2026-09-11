@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
@@ -16,51 +16,12 @@ import AlertToastNotification from "./components/AlertToastNotification";
 export default function App() {
   const [view, setView] = useState("landing"); // "landing" | "login" | "forbidden" | "app"
   const [activePage, setActivePage] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    try {
-      const saved = localStorage.getItem("sentinel_sidebar_open");
-      return saved !== null ? JSON.parse(saved) : true;
-    } catch (e) {
-      return true;
-    }
-  });
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState({
     email: "patidarmitisha@gmail.com",
     role: "Dy. Commissioner (Admin)",
     roleKey: "admin",
   });
-
-  // Toggle sidebar collapse / expand with persistence
-  const toggleSidebar = () => {
-    setSidebarOpen((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem("sentinel_sidebar_open", JSON.stringify(next));
-      } catch (e) {}
-      return next;
-    });
-  };
-
-  // Recalibrate Leaflet maps on sidebar resize transition
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      window.dispatchEvent(new Event("resize"));
-    }, 320);
-    return () => clearTimeout(timer);
-  }, [sidebarOpen]);
-
-  // Optional keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        toggleSidebar();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
@@ -96,36 +57,32 @@ export default function App() {
       {/* Realtime Floating Toast for Incoming Alerts */}
       <AlertToastNotification onInspectAlert={() => setActivePage("alerts")} />
 
-      {/* Navbar with Always-Visible Hamburger Toggle */}
+      {/* Navbar */}
       <Navbar
         activePage={activePage}
         setActivePage={setActivePage}
         user={user}
         onLogout={handleLogout}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={toggleSidebar}
+        onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         liveCount={30}
         alertCount={3}
       />
 
       {/* Main Body */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Collapsible Sidebar */}
+        {/* Sidebar */}
         <Sidebar
           activePage={activePage}
           setActivePage={(page) => {
             setActivePage(page);
-            if (window.innerWidth < 768) {
-              setSidebarOpen(false);
-            }
+            setMobileMenuOpen(false);
           }}
-          isOpen={sidebarOpen}
-          onToggle={toggleSidebar}
-          onClose={() => setSidebarOpen(false)}
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
         />
 
-        {/* Page Content View - Dynamically expands when sidebar collapses */}
-        <main className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
+        {/* Page Content View */}
+        <main className="flex-1 flex flex-col overflow-hidden">
           {activePage === "dashboard" && <DashboardPage setActivePage={setActivePage} />}
           {activePage === "cameras" && <CameraGridPage />}
           {activePage === "vehicle-search" && <VehicleSearchPage />}
