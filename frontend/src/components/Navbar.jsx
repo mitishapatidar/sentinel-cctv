@@ -48,13 +48,10 @@ export default function Navbar({
         </div>
 
         <div>
-          {/* Top Line: Gujarati & English Police Department + Grid Badge */}
+          {/* Top Line: Gujarati & English Police Department */}
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold text-blue-400 tracking-wide">
               {t("policeDept")}
-            </span>
-            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
-              {t("gridBadge")}
             </span>
           </div>
 

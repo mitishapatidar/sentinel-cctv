@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { ShieldCheck, Lock, FileText, Download, UserCheck, AlertCircle, Clock } from "lucide-react";
 
 export default function AuditLogsPage() {
@@ -97,7 +97,7 @@ export default function AuditLogsPage() {
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <FileText className="h-5 w-5 text-purple-400 shrink-0 mt-0.5" />
+            <FileText className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-white">Section 65B Certificate Ready</p>
               <p className="text-[#7d8da3] text-[11px] mt-0.5">Automated timestamp hash verification for court submissions.</p>

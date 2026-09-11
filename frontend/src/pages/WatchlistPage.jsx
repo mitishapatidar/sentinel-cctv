@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { ShieldAlert, Plus, Trash2, CheckCircle2, Car, User, Search, RefreshCw } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
@@ -167,7 +167,7 @@ export default function WatchlistPage() {
             filteredItems.map((entry) => {
               const badgeColors = {
                 stolen: "bg-red-500/15 text-red-400 border-red-500/30",
-                wanted: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+                wanted: "bg-red-500/15 text-red-400 border-red-500/30",
                 blacklisted: "bg-amber-500/15 text-amber-400 border-amber-500/30",
                 suspicious: "bg-blue-500/15 text-blue-400 border-blue-500/30",
               };

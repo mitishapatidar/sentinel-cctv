@@ -264,12 +264,12 @@ export default function DashboardPage({ setActivePage }) {
               <p className="text-[10px] text-[#7d8da3] mt-1">{t("watchlistMatches")}</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#111823] border border-purple-500/30 bg-purple-500/5">
+            <div className="p-4 rounded-xl bg-[#111823] border border-[#1e2a3a]">
               <div className="flex items-center justify-between text-[#7d8da3] mb-2">
                 <span className="text-xs uppercase tracking-wider font-semibold">{t("trackedPlates")}</span>
-                <Car className="h-4 w-4 text-purple-400" />
+                <Car className="h-4 w-4 text-blue-400" />
               </div>
-              <p className="text-2xl font-extrabold font-mono text-purple-400">{stats.vehiclesTracked}</p>
+              <p className="text-2xl font-extrabold font-mono text-white">{stats.vehiclesTracked}</p>
               <p className="text-[10px] text-[#7d8da3] mt-1">{t("anprProcessed")}</p>
             </div>
           </div>
@@ -294,7 +294,7 @@ export default function DashboardPage({ setActivePage }) {
                   <span className="font-mono text-white">10 Feeds</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 w-[33%] rounded-full"></div>
+                  <div className="h-full bg-blue-500/80 w-[33%] rounded-full"></div>
                 </div>
               </div>
 
@@ -304,7 +304,7 @@ export default function DashboardPage({ setActivePage }) {
                   <span className="font-mono text-white">5 Feeds</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-purple-500 w-[17%] rounded-full"></div>
+                  <div className="h-full bg-blue-500/60 w-[17%] rounded-full"></div>
                 </div>
               </div>
 
@@ -314,7 +314,7 @@ export default function DashboardPage({ setActivePage }) {
                   <span className="font-mono text-white">3 Feeds</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500 w-[10%] rounded-full"></div>
+                  <div className="h-full bg-blue-500/40 w-[10%] rounded-full"></div>
                 </div>
               </div>
             </div>
