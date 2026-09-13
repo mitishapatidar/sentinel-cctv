@@ -3,9 +3,12 @@ import json
 import urllib.request
 import urllib.parse
 import http.cookiejar
+import threading
+import time
 from pathlib import Path
 from typing import List, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, Response, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -30,11 +33,12 @@ app.add_middleware(
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://splqtcnmbxjojxjeauzt.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
+SNAPSHOTS_DIR = Path(__file__).resolve().parent / "snapshots"
+os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
+
 # Authenticated Session Opener
 cj = http.cookiejar.CookieJar()
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-
-import time
 
 last_login_time = 0
 
@@ -60,12 +64,62 @@ def login_to_cctv():
         print("[Relay] Login error:", e)
         return False
 
-# Authenticate on startup
-login_to_cctv()
+# Background worker to refresh snapshots every 3 minutes (180s)
+def snapshot_refresh_worker():
+    """Captures 1 frame per operational camera feed every 180 seconds."""
+    import cv2
+    operational_cams = [
+        "cam01", "cam02", "cam03", "cam04", "cam07", "cam08", 
+        "cam09", "cam10", "cam11", "cam12", "cam13", "cam14", 
+        "cam15", "cam16", "cam17"
+    ]
+    time.sleep(15)  # Initial wait for server to settle
+    while True:
+        try:
+            print("[Snapshot Worker] Starting 3-minute periodic snapshot refresh cycle...")
+            for cam_id in operational_cams:
+                stream_url = f"http://127.0.0.1:8000/stream/{cam_id}/index.m3u8"
+                try:
+                    cap = cv2.VideoCapture(stream_url)
+                    ret, frame = cap.read()
+                    if ret and frame is not None and frame.size > 0:
+                        out_path = SNAPSHOTS_DIR / f"{cam_id}.jpg"
+                        cv2.imwrite(str(out_path), frame)
+                    cap.release()
+                except Exception as cam_err:
+                    pass
+                time.sleep(1.5)  # Stagger connections to avoid gateway rate limits
+            print("[Snapshot Worker] Periodic snapshot refresh cycle complete.")
+        except Exception as e:
+            print("[Snapshot Worker] Worker loop exception:", e)
+        time.sleep(180)
+
+@app.on_event("startup")
+def startup_event():
+    login_to_cctv()
+    t = threading.Thread(target=snapshot_refresh_worker, daemon=True)
+    t.start()
+    print("[Relay] Snapshot background refresh worker started.")
 
 @app.get("/health")
 def health():
     return {"status": "healthy", "service": "SENTINEL HLS Authenticated Relay"}
+
+@app.get("/api/cameras/{cam_id}/snapshot")
+def get_camera_snapshot(cam_id: str):
+    """Returns the latest cached snapshot for the requested camera ID."""
+    snapshot_path = SNAPSHOTS_DIR / f"{cam_id}.jpg"
+    if snapshot_path.exists():
+        return FileResponse(
+            snapshot_path, 
+            media_type="image/jpeg",
+            headers={"Cache-Control": "public, max-age=180"}
+        )
+    # Fallback to cam01 snapshot if specific id not found yet
+    fallback_path = SNAPSHOTS_DIR / "cam01.jpg"
+    if fallback_path.exists():
+        return FileResponse(fallback_path, media_type="image/jpeg")
+    raise HTTPException(status_code=404, detail=f"Snapshot for {cam_id} not available")
 
 @app.get("/stream/enc.key")
 def get_encryption_key():

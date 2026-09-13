@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from "react";
-import { Search, Filter, Radio, Maximize2, Shield, Eye, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Search, Filter, Radio, Maximize2, Shield, Eye, RefreshCw, Play, Tv } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import HlsPlayer from "../components/HlsPlayer";
 import { INITIAL_CAMERAS } from "../data/camerasData";
@@ -8,7 +8,37 @@ export default function CameraGridPage() {
   const [cameras, setCameras] = useState(INITIAL_CAMERAS);
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState("all");
+  const [viewMode, setViewMode] = useState("hover"); // "hover" | "all"
+  const [hoveredCamId, setHoveredCamId] = useState(null);
+  const [snapshotTimestamp, setSnapshotTimestamp] = useState(Date.now());
   const [activeCamModal, setActiveCamModal] = useState(null);
+  const hoverTimerRef = useRef(null);
+
+  // Auto-refresh snapshot images every 3 minutes (180 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSnapshotTimestamp(Date.now());
+    }, 180000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMouseEnter = (camId) => {
+    if (viewMode !== "hover") return;
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    // Debounce hover activation by 250ms to prevent socket storm on cursor sweeping
+    hoverTimerRef.current = setTimeout(() => {
+      setHoveredCamId(camId);
+    }, 250);
+  };
+
+  const handleMouseLeave = (camId) => {
+    if (viewMode !== "hover") return;
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoveredCamId((prev) => (prev === camId ? null : prev));
+  };
 
   useEffect(() => {
     // Try refreshing with real-time Supabase state if available
@@ -49,10 +79,15 @@ export default function CameraGridPage() {
       <div className="border-b border-[#1e2a3a] px-6 py-4 bg-[#111823] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide">Multi-Camera Live Video Grid</h1>
-          <p className="text-xs text-[#7d8da3] mt-0.5">Model 2: Unified Video Viewing Gateway • 30 Feeds Streaming</p>
+          <p className="text-xs text-[#7d8da3] mt-0.5">
+            Model 2: Unified Video Viewing Gateway •{" "}
+            <span className="text-blue-400 font-medium">
+              {viewMode === "hover" ? "Hover-to-Play Active (3m auto-refresh)" : "All 30 Feeds Live Streaming"}
+            </span>
+          </p>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search, Filters, and Stream Mode Selector */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[#7d8da3]" />
@@ -61,7 +96,7 @@ export default function CameraGridPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search camera or city..."
-              className="bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-[#5c6b86] focus:outline-none focus:border-blue-500 w-48 transition-colors"
+              className="bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-[#5c6b86] focus:outline-none focus:border-blue-500 w-44 transition-colors"
             />
           </div>
 
@@ -76,57 +111,122 @@ export default function CameraGridPage() {
               </option>
             ))}
           </select>
+
+          {/* Mode Dropdown: Hover to play vs All live */}
+          <div className="flex items-center gap-1.5 bg-[#0a0e14] border border-[#1e2a3a] rounded-xl px-2.5 py-1">
+            <Tv className="h-3.5 w-3.5 text-blue-400" />
+            <select
+              value={viewMode}
+              onChange={(e) => {
+                setViewMode(e.target.value);
+                setHoveredCamId(null);
+              }}
+              className="bg-transparent text-xs text-white focus:outline-none cursor-pointer font-medium pr-1"
+              title="Select Grid Streaming Mode"
+            >
+              <option value="hover" className="bg-[#111823] text-white">
+                Hover to play (Default)
+              </option>
+              <option value="all" className="bg-[#111823] text-white">
+                All live (30 concurrent)
+              </option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Grid Content */}
       <div className="p-6 flex-1">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredCameras.map((cam) => (
-            <div
-              key={cam.id}
-              className="bg-[#111823] border border-[#1e2a3a] hover:border-blue-500/50 rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all group"
-            >
-              {/* Tile Header */}
-              <div className="px-3.5 py-2.5 bg-[#0d141f] border-b border-[#1e2a3a] flex items-center justify-between">
-                <div className="flex items-center gap-2 truncate">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span className="font-mono text-xs font-bold text-white uppercase">{cam.id}</span>
+          {filteredCameras.map((cam) => {
+            const isLive = viewMode === "all" || hoveredCamId === cam.id;
+            return (
+              <div
+                key={cam.id}
+                onMouseEnter={() => handleMouseEnter(cam.id)}
+                onMouseLeave={() => handleMouseLeave(cam.id)}
+                className="bg-[#111823] border border-[#1e2a3a] hover:border-blue-500/50 rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all group"
+              >
+                {/* Tile Header */}
+                <div className="px-3.5 py-2.5 bg-[#0d141f] border-b border-[#1e2a3a] flex items-center justify-between">
+                  <div className="flex items-center gap-2 truncate">
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        isLive ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                      }`}
+                    ></span>
+                    <span className="font-mono text-xs font-bold text-white uppercase">{cam.id}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {isLive && (
+                      <span className="text-[9px] text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider">
+                        LIVE
+                      </span>
+                    )}
+                    <span className="text-[10px] text-blue-400 font-medium px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                      {cam.city}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-[10px] text-blue-400 font-medium px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
-                  {cam.city}
-                </span>
-              </div>
 
-              {/* Video Stream Container */}
-              <div className="relative aspect-video w-full bg-black">
-                <HlsPlayer
-                  streamUrl={cam.hls_url}
-                  cameraName={cam.name}
-                  cameraId={cam.id}
-                />
+                {/* Video Stream or Static Snapshot Container */}
+                <div className="relative aspect-video w-full bg-black overflow-hidden">
+                  {isLive ? (
+                    <HlsPlayer
+                      streamUrl={cam.hls_url}
+                      cameraName={cam.name}
+                      cameraId={cam.id}
+                    />
+                  ) : (
+                    <div className="relative w-full h-full bg-[#0a0e14] flex items-center justify-center">
+                      <img
+                        src={`http://127.0.0.1:8000/api/cameras/${cam.id}/snapshot?t=${snapshotTimestamp}`}
+                        alt={cam.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          e.target.src = "http://127.0.0.1:8000/api/cameras/cam01/snapshot";
+                        }}
+                      />
+                      {/* Snapshot Indicator Badge */}
+                      <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs border border-white/10 text-[10px] text-[#94a3b8] font-mono">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
+                        <span>SNAPSHOT (3m)</span>
+                      </div>
 
-                <button
-                  onClick={() => setActiveCamModal(cam)}
-                  className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/80 hover:text-white hover:bg-black/90 backdrop-blur-xs transition-all cursor-pointer opacity-0 group-hover:opacity-100 z-30"
-                  title="Maximize Stream"
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+                      {/* Hover Hint Overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 pointer-events-none">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/90 text-white text-xs font-semibold shadow-lg backdrop-blur-xs">
+                          <Play className="h-3.5 w-3.5 fill-white" />
+                          <span>Hover to Stream Live</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Tile Footer */}
-              <div className="p-3 bg-[#111823] mt-auto">
-                <p className="text-xs font-semibold text-white truncate" title={cam.name}>
-                  {cam.name}
-                </p>
-                <div className="flex items-center justify-between text-[10px] text-[#7d8da3] mt-1">
-                  <span>{cam.department}</span>
-                  <span className="font-mono text-[#5c6b86]">1080p • H.264</span>
+                  <button
+                    onClick={() => setActiveCamModal(cam)}
+                    className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/80 hover:text-white hover:bg-black/90 backdrop-blur-xs transition-all cursor-pointer opacity-0 group-hover:opacity-100 z-30"
+                    title="Maximize Stream"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {/* Tile Footer */}
+                <div className="p-3 bg-[#111823] mt-auto">
+                  <p className="text-xs font-semibold text-white truncate" title={cam.name}>
+                    {cam.name}
+                  </p>
+                  <div className="flex items-center justify-between text-[10px] text-[#7d8da3] mt-1">
+                    <span>{cam.department}</span>
+                    <span className="font-mono text-[#5c6b86]">
+                      {isLive ? "1080p • H.264" : "Cached 3m"}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
