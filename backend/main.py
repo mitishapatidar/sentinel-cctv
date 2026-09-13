@@ -37,9 +37,11 @@ opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
 def login_to_cctv():
     try:
         login_url = "https://cctv.corp8.cloud/auth/login"
+        cctv_email = os.getenv("CCTV_GATEWAY_EMAIL", "sentialcctv@gmail.com")
+        cctv_pwd = os.getenv("CCTV_GATEWAY_PASSWORD", "sentialofficial@1428")
         data = urllib.parse.urlencode({
-            "email": "sentialcctv@gmail.com",
-            "password": "sentialofficial@1428"
+            "email": cctv_email,
+            "password": cctv_pwd
         }).encode("utf-8")
         req = urllib.request.Request(login_url, data=data, headers={"User-Agent": "Mozilla/5.0"})
         res = opener.open(req)
@@ -61,12 +63,12 @@ def get_encryption_key():
     """Proxies the AES-128 decryption key so browser can decrypt the video stream."""
     try:
         req = urllib.request.Request("https://cctv.corp8.cloud/enc.key", headers={"User-Agent": "Mozilla/5.0"})
-        res = opener.open(req, timeout=5)
+        res = opener.open(req, timeout=20)
         return Response(content=res.read(), media_type="application/octet-stream")
     except Exception as e:
         login_to_cctv()
         req = urllib.request.Request("https://cctv.corp8.cloud/enc.key", headers={"User-Agent": "Mozilla/5.0"})
-        res = opener.open(req, timeout=5)
+        res = opener.open(req, timeout=20)
         return Response(content=res.read(), media_type="application/octet-stream")
 
 @app.get("/stream/{cam_id}/index.m3u8")
@@ -75,7 +77,7 @@ def get_hls_manifest(cam_id: str):
     try:
         target_url = f"https://cctv.corp8.cloud/{cam_id}/index.m3u8"
         req = urllib.request.Request(target_url, headers={"User-Agent": "Mozilla/5.0"})
-        res = opener.open(req, timeout=5)
+        res = opener.open(req, timeout=20)
         manifest_text = res.read().decode("utf-8")
         
         # Rewrite AES Key URI to route through local relay
@@ -91,7 +93,7 @@ def get_hls_manifest(cam_id: str):
         return Response(content="\n".join(rewritten_lines), media_type="application/vnd.apple.mpegurl")
     except Exception as e:
         login_to_cctv()
-        raise HTTPException(status_code=502, detail="Upstream camera stream unreachable")
+        raise HTTPException(status_code=502, detail=f"Upstream camera stream unreachable: {e}")
 
 @app.get("/stream/{cam_id}/{segment_file}")
 def get_hls_segment(cam_id: str, segment_file: str):
@@ -99,7 +101,7 @@ def get_hls_segment(cam_id: str, segment_file: str):
     try:
         target_url = f"https://cctv.corp8.cloud/{cam_id}/{segment_file}"
         req = urllib.request.Request(target_url, headers={"User-Agent": "Mozilla/5.0"})
-        res = opener.open(req, timeout=10)
+        res = opener.open(req, timeout=25)
         return Response(content=res.read(), media_type="video/MP2T")
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to fetch segment: {e}")

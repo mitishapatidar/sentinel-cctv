@@ -11,10 +11,12 @@ __pycache__/
 *.env
 
 # AI Pipeline Weights & Datasets (Keep structure, ignore bulky binaries)
-ai_pipeline/models/*
-!ai_pipeline/models/.gitkeep
-ai_pipeline/dataset/*
-!ai_pipeline/dataset/.gitkeep
+ai_pipeline/models/**/*
+!ai_pipeline/models/**/
+!ai_pipeline/models/**/.gitkeep
+ai_pipeline/dataset/**/*
+!ai_pipeline/dataset/**/
+!ai_pipeline/dataset/**/.gitkeep
 runs/
 *.pt
 *.onnx
