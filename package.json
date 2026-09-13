@@ -1,0 +1,10 @@
+{
+  "name": "sentinel-cctv",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unified Multi-Camera AI ANPR & CCTV Surveillance Platform",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm run dev"
+  }
+}
