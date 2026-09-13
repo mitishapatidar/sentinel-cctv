@@ -107,7 +107,8 @@ def train_detector(
     target_best = weights_dir / "best.pt"
     
     if run_best.exists():
-        shutil.copyfile(run_best, target_best)
+        if run_best.resolve() != target_best.resolve():
+            shutil.copyfile(run_best, target_best)
         print(f"\n[3/3] Checkpoint successfully verified and saved to: {target_best}", flush=True)
         print(f"File size: {target_best.stat().st_size / (1024*1024):.2f} MB", flush=True)
     elif run_last.exists():
