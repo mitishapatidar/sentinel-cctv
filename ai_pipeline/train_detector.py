@@ -120,4 +120,4 @@ def train_detector(
 
 if __name__ == "__main__":
     is_sanity = "--sanity" in sys.argv
-    train_detector(epochs=5, imgsz=480, batch_size=8, is_sanity_check=is_sanity)
+    train_detector(epochs=8, imgsz=512, batch_size=8, is_sanity_check=is_sanity)

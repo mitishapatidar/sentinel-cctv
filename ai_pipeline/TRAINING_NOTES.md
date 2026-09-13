@@ -55,3 +55,21 @@ To ensure honest validation and prevent frame-to-frame leakage, splits are parti
 - **Trained Model Weights:** `ai_pipeline/models/sentinel_plate_detector/weights/best.pt` (5.92 MB)
 - **Test Prediction Overlays (10 frames):** `ai_pipeline/dataset/_final_preview/test_pred_*.png`
 - **Google Colab GPU Training (50 Epochs T4):** `ai_pipeline/train_on_colab.ipynb`
+
+---
+
+## 6. Phase 8: End-to-End Plate Reader & Unit Test Verification
+- **Dual-Stage Pipeline (`ai_pipeline/plate_reader.py`):**
+  1. Fine-tuned YOLOv8n detector (`best.pt`) localizes plate bounding boxes and classifies single-line vs two-line plates.
+  2. CLAHE (Contrast Limited Adaptive Histogram Equalization) on LAB color space L-channel enhances dark/washed-out plates with 56px minimum upscaling.
+  3. Aspect-ratio branching: two-line plates (aspect ratio < 2.0) are bisected horizontally into top (RTO registration) and bottom (4-digit number) OCR passes.
+  4. Phonetic & character confusion heuristics resolve standard OCR errors:
+     - `6J` / `CJ` / `OJ` $\to$ `GJ`
+     - Strip `IND` prefix
+     - In numeric suffix: `O -> 0`, `I -> 1`, `B -> 8`, `S -> 5`, `Z -> 2`
+     - In series prefix: `0 -> O`, `1 -> I`, `8 -> B`, `5 -> S`
+  5. Strict Indian HSRP Regex Validation (`^[A-Z]{2}-[0-9]{2}-[A-Z]{1,3}-[0-9]{4}$`).
+- **Unit Test Suite (`ai_pipeline/tests/test_plate_reader.py`):**
+  - Tested on 10 realistic OCR edge cases (including `6J18XY9012`, `IND GJ12KL4321`, `CJ 06 ER 3456`, lowercase formatting, spacing irregularities).
+  - **Result:** **10 / 10 Test Cases Passed (100%)**, `best.pt` checkpoint verified.
+

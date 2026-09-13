@@ -105,4 +105,11 @@ def evaluate_post_training(baseline_metrics=None):
     }
 
 if __name__ == "__main__":
-    evaluate_post_training()
+    baseline = {
+        "precision": 0.000741,
+        "recall": 0.0286,
+        "map50": 0.00012,
+        "map50_95": 0.0000371
+    }
+    evaluate_post_training(baseline_metrics=baseline)
+
