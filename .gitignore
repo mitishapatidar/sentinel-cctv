@@ -1,7 +1,20 @@
+# Dependencies & Bundles
 node_modules/
 dist/
-.env
-.env.local
 *.pyc
 __pycache__/
 *.log
+
+# Environment & Secret Configurations
+.env
+.env.local
+*.env
+
+# AI Pipeline Weights & Datasets (Keep structure, ignore bulky binaries)
+ai_pipeline/models/*
+!ai_pipeline/models/.gitkeep
+ai_pipeline/dataset/*
+!ai_pipeline/dataset/.gitkeep
+runs/
+*.pt
+*.onnx
