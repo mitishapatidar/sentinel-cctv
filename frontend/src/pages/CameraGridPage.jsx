@@ -13,6 +13,7 @@ export default function CameraGridPage() {
   const [snapshotTimestamp, setSnapshotTimestamp] = useState(Date.now());
   const [activeCamModal, setActiveCamModal] = useState(null);
   const hoverTimerRef = useRef(null);
+  const hoverStartTimeRef = useRef(null);
 
   // Auto-refresh snapshot images every 3 minutes (180 seconds)
   useEffect(() => {
@@ -24,11 +25,14 @@ export default function CameraGridPage() {
 
   const handleMouseEnter = (camId) => {
     if (viewMode !== "hover") return;
+    const enterTime = performance.now();
+    hoverStartTimeRef.current = enterTime;
+    console.log(`[HOVER] Mouseenter on ${camId} at ${enterTime.toFixed(1)}ms`);
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    // Debounce hover activation by 250ms to prevent socket storm on cursor sweeping
+    // Debounce hover activation by 120ms for super snappy responsiveness
     hoverTimerRef.current = setTimeout(() => {
       setHoveredCamId(camId);
-    }, 250);
+    }, 120);
   };
 
   const handleMouseLeave = (camId) => {
@@ -37,6 +41,7 @@ export default function CameraGridPage() {
       clearTimeout(hoverTimerRef.current);
       hoverTimerRef.current = null;
     }
+    hoverStartTimeRef.current = null;
     setHoveredCamId((prev) => (prev === camId ? null : prev));
   };
 
@@ -176,6 +181,8 @@ export default function CameraGridPage() {
                       streamUrl={cam.hls_url}
                       cameraName={cam.name}
                       cameraId={cam.id}
+                      hoverStartTime={hoverStartTimeRef.current}
+                      snapshotUrl={`http://127.0.0.1:8000/api/cameras/${cam.id}/snapshot?t=${snapshotTimestamp}`}
                     />
                   ) : (
                     <div className="relative w-full h-full bg-[#0a0e14] flex items-center justify-center">
