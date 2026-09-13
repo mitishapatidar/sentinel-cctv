@@ -1,4 +1,4 @@
-﻿# 🛡️ SENTINEL — Statewide Centralised CCTV Intelligence Platform
+# 🛡️ SENTINEL — Statewide Centralised CCTV Intelligence Platform
 ### Gujarat Police Innovation Challenge 2026 (GPIC) • Model 1 + Model 2 Hybrid Architecture
 *Developed for State Crime Record Bureau (SCRB), Gandhinagar, Gujarat Police*
 
@@ -61,7 +61,7 @@ To verify the platform's mandatory evaluation test cases:
    # Open http://localhost:5173/
    ```
 2. **Access the Command Grid:**
-   - Click **"Control Room Sign In"** ➔ Pre-filled credentials (`patidarmitisha@gmail.com` / `NYJF-T8U3-MHP8`) ➔ **"Enter Command Grid"**.
+   - Click **"Control Room Sign In"** ➔ Pre-filled credentials (`sentialcctv@gmail.com` / `sentialofficial@1428`) ➔ **"Enter Command Grid"**.
 3. **Verify Mandatory Vehicle Tracking:**
    - Navigate to **"Vehicle Tracking"** on the left menu.
    - Click quick test button **`GJ-05-AB-1234 (Stolen Swift)`**.

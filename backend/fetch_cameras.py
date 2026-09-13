@@ -7,7 +7,7 @@ cj = http.cookiejar.CookieJar()
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
 
 login_url = "https://cctv.corp8.cloud/auth/login"
-data = urllib.parse.urlencode({"email": "patidarmitisha@gmail.com", "password": "NYJF-T8U3-MHP8"}).encode("utf-8")
+data = urllib.parse.urlencode({"email": "sentialcctv@gmail.com", "password": "sentialofficial@1428"}).encode("utf-8")
 opener.open(urllib.request.Request(login_url, data=data, headers={"User-Agent": "Mozilla/5.0"}))
 
 # Fetch cameras.json

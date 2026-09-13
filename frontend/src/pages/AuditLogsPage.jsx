@@ -6,17 +6,17 @@ export default function AuditLogsPage() {
     {
       id: "LOG-2026-9901",
       timestamp: "10-09-2026 23:46:19",
-      operator: "patidarmitisha@gmail.com",
+      operator: "sentialcctv@gmail.com",
       role: "Dy. Commissioner (Admin)",
       action: "CONTROL_ROOM_LOGIN",
-      target: "Session Authenticated via Token NYJF-T8U3-MHP8",
+      target: "Session Authenticated via Token sentialofficial@1428",
       ip: "103.250.160.189",
       status: "VERIFIED",
     },
     {
       id: "LOG-2026-9902",
       timestamp: "10-09-2026 23:47:05",
-      operator: "patidarmitisha@gmail.com",
+      operator: "sentialcctv@gmail.com",
       role: "Dy. Commissioner (Admin)",
       action: "STREAM_VIEW",
       target: "CAM04 (Paldi Circle HLS Stream)",
@@ -26,7 +26,7 @@ export default function AuditLogsPage() {
     {
       id: "LOG-2026-9903",
       timestamp: "10-09-2026 23:49:12",
-      operator: "patidarmitisha@gmail.com",
+      operator: "sentialcctv@gmail.com",
       role: "Dy. Commissioner (Admin)",
       action: "ANPR_SEARCH",
       target: "Vehicle Query: GJ-05-AB-1234 (Stolen)",
@@ -36,7 +36,7 @@ export default function AuditLogsPage() {
     {
       id: "LOG-2026-9904",
       timestamp: "10-09-2026 23:51:30",
-      operator: "patidarmitisha@gmail.com",
+      operator: "sentialcctv@gmail.com",
       role: "Dy. Commissioner (Admin)",
       action: "ALERT_ACKNOWLEDGE",
       target: "Alert #ALT-9021 (Paldi Circle Stolen Swift)",

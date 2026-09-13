@@ -3,8 +3,8 @@ import { Shield, Lock, Mail, ArrowRight, AlertTriangle, ArrowLeft, Building, Bad
 
 export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHome }) {
   const [badgeId, setBadgeId] = useState("GP-CID-7809");
-  const [email, setEmail] = useState("patidarmitisha@gmail.com");
-  const [password, setPassword] = useState("NYJF-T8U3-MHP8");
+  const [email, setEmail] = useState("sentialcctv@gmail.com");
+  const [password, setPassword] = useState("sentialofficial@1428");
   const [role, setRole] = useState("admin"); // Only "admin" | "operator"
   const [department, setDepartment] = useState("CID Crime Branch (Criminal Pursuit & ANPR)");
   const [loading, setLoading] = useState(false);
@@ -24,8 +24,8 @@ export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHo
       setLoading(false);
 
       // Validate credentials:
-      // Authorized Access Token Password is "NYJF-T8U3-MHP8"
-      const isAuthorized = password.trim() === "NYJF-T8U3-MHP8";
+      // Authorized Access Token Password is "sentialofficial@1428"
+      const isAuthorized = password.trim() === "sentialofficial@1428";
 
       if (!isAuthorized) {
         // Fake person / unauthorized intruder attempt -> Redirect to 403 Forbidden!
@@ -131,7 +131,7 @@ export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHo
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="patidarmitisha@gmail.com"
+                placeholder="sentialcctv@gmail.com"
                 className="w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
                 required
               />
@@ -149,7 +149,7 @@ export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHo
                 type="text"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="NYJF-T8U3-MHP8"
+                placeholder="sentialofficial@1428"
                 className="w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-blue-500 transition-colors"
                 required
               />

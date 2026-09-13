@@ -1,4 +1,4 @@
-﻿import os
+import os
 import json
 import urllib.request
 import urllib.parse
@@ -38,8 +38,8 @@ def login_to_cctv():
     try:
         login_url = "https://cctv.corp8.cloud/auth/login"
         data = urllib.parse.urlencode({
-            "email": "patidarmitisha@gmail.com",
-            "password": "NYJF-T8U3-MHP8"
+            "email": "sentialcctv@gmail.com",
+            "password": "sentialofficial@1428"
         }).encode("utf-8")
         req = urllib.request.Request(login_url, data=data, headers={"User-Agent": "Mozilla/5.0"})
         res = opener.open(req)

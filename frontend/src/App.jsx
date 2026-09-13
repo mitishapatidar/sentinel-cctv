@@ -26,7 +26,7 @@ export default function App() {
   });
 
   const [user, setUser] = useState({
-    email: "patidarmitisha@gmail.com",
+    email: "sentialcctv@gmail.com",
     role: "Dy. Commissioner (Admin)",
     roleKey: "admin",
   });
