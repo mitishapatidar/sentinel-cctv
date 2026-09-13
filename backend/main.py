@@ -108,11 +108,7 @@ def snapshot_refresh_worker():
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     from cryptography.hazmat.backends import default_backend
 
-    operational_cams = [
-        "cam01", "cam02", "cam03", "cam04", "cam05", "cam06", "cam07", "cam08", 
-        "cam09", "cam10", "cam11", "cam12", "cam13", "cam14", 
-        "cam15", "cam16", "cam17"
-    ]
+    operational_cams = [f"cam{i:02d}" for i in range(1, 31)]
     time.sleep(5)  # Warmup wait
     headers = {"User-Agent": "Mozilla/5.0", "Referer": "https://cctv.corp8.cloud/"}
     

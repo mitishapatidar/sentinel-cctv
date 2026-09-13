@@ -19,18 +19,18 @@ Built specifically for the **Gujarat Police Innovation Challenge 2026**, SENTINE
 - **Coverage Gap Analysis:** Identifies surveillance blind spots across state highway corridors.
 
 ### 2. Unified Multi-VMS Streaming Grid (Model 2)
-- **30 Live Government Feeds Ingested:** Authenticated synchronization from `cctv.corp8.cloud` with HLS, WebRTC, and RTSP stream endpoints.
-- **Low-Latency Playback:** Sub-second browser video grid powered by `hls.js` with failover simulated relays.
+- **30 Live Feeds Synchronized:** Authenticated ingestion from `cctv.corp8.cloud` with HLS streams and background 3-minute cached snapshot architecture.
+- **Optimized Hover-to-Play Playback:** On-demand HLS streaming with in-memory compact sliding-window playlists and seamless snapshot cross-fade.
 - **Departmental Filtering:** Instant views for City Police, Traffic Police, Highway Patrol, Coastal Security, and Gram Panchayats.
 
 ### 3. Automated Vehicle Trajectory Reconstruction *(Mandatory Test Case)*
 - **Statewide Route Tracing:** Enter any registration plate (e.g. `GJ-05-AB-1234`) to trace chronological movement across camera checkpoints.
 - **Sequential GIS Route:** Renders directional route polylines on the Gujarat State Map with numbered checkpoint markers.
-- **Certified Evidence Dossier:** Generates printable legal certificates compliant with **Section 65B of the Indian Evidence Act**.
+- **Certified Evidence Dossier:** Generates printable evidentiary reports formatted based on Section 65B requirements of the Indian Evidence Act.
 
 ### 4. Real-Time Watchlist & Automated Alerts
 - Cross-references incoming ANPR detections against stolen vehicle and wanted suspect registries.
-- **Supabase Realtime WebSockets:** Pushes emergency alerts to command consoles in **< 1.2 seconds** with audio sirens and floating toast notifications.
+- **Supabase Realtime WebSockets:** Pushes real-time emergency alerts to command consoles with audio notification and floating toast alerts.
 
 ### 5. Cybersecurity & DPDP Act 2023 Compliance
 - **Zero-Trust RBAC:** Granular roles for Dy. Commissioner (Admin), Traffic In-Charge (Operator), and Viewer with 403 Forbidden enforcement.
@@ -98,12 +98,12 @@ sentinel-cctv/
 ---
 
 ## 🏆 Gujarat Police Innovation Challenge 2026 Submission Status
-- [x] Model 1: Centralised CCTV GIS Registry (30 Real Cameras Onboarded)
-- [x] Model 2: Unified Multi-VMS Streaming Grid (HLS Relay Operational)
-- [x] Mandatory Evaluation Test Case: Vehicle Trajectory Reconstruction (< 1s Latency)
+- [x] Model 1: Centralised CCTV GIS Registry (30 Gujarat Police Camera Sites Configured)
+- [x] Model 2: Unified Multi-VMS Streaming Grid (Hover-to-Play HLS Relay & Snapshots Verified)
+- [x] Mandatory Evaluation Test Case: Vehicle Trajectory Reconstruction (Sequential GPS Route Tracing)
 - [x] High-Level Design (HLD) Document Ready (`docs/HLD_ARCHITECTURE.md`)
 - [x] 10-Slide Presentation Pitch Deck Ready (`docs/PRESENTATION_SLIDES.md`)
 - [x] 3-Minute Video Walkthrough Script Ready
-- [x] Zero-Error Production Build Verified
+- [x] Production Frontend Build Verified (Vite 8.3 / Zero Errors)
 
 *Submitted for Gujarat Police Innovation Challenge 2026 by Mitisha Patidar.*
