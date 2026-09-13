@@ -1,47 +1,19 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell, AlertTriangle, ShieldAlert, Check, X, Eye, Clock, MapPin, Radio, RefreshCw } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { alertService } from "../services/alertService";
+import { INITIAL_ALERTS } from "../data/alertsData";
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState([]);
+  const [alerts, setAlerts] = useState(INITIAL_ALERTS);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchAlerts = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("alerts")
-      .select("*, cameras(name, city)")
-      .order("created_at", { ascending: false });
-
+    const { data } = await alertService.getAlerts();
     if (data && data.length > 0) {
       setAlerts(data);
-    } else {
-      // Fallback initial demo alerts if DB has none
-      setAlerts([
-        {
-          id: "1",
-          alert_code: "ALT-9021",
-          title: "STOLEN Vehicle Detected: GJ-05-AB-1234",
-          alert_type: "Watchlist Match",
-          severity: "critical",
-          message: "Identified at 04 Paldi Circle. Match confidence 98%. Automated law enforcement intercept notified.",
-          status: "pending",
-          created_at: new Date().toISOString(),
-          cameras: { name: "04 Paldi Circle", city: "Ahmedabad" },
-        },
-        {
-          id: "2",
-          alert_code: "ALT-9020",
-          title: "BLACKLISTED Vehicle Detected: GJ-01-XY-7788",
-          alert_type: "Smuggling Watchlist",
-          severity: "high",
-          message: "Identified at 12 Tri Mandir Adalaj Tollnaka. FASTag toll evasion flagged.",
-          status: "pending",
-          created_at: new Date(Date.now() - 600000).toISOString(),
-          cameras: { name: "12 Tri Mandir Adalaj Tollnaka", city: "Gandhinagar" },
-        },
-      ]);
     }
     setLoading(false);
   };
@@ -73,13 +45,10 @@ export default function AlertsPage() {
       prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
     );
 
-    // Update in Supabase
-    try {
-      await supabase.from("alerts").update({ status: newStatus }).eq("id", id);
-    } catch (e) {
-      console.log("Error updating alert status:", e);
-    }
+    // Update via alertService (syncs to localStorage, backend API proxy, and Supabase)
+    await alertService.updateStatus(id, newStatus);
   };
+
 
   const filteredAlerts = alerts.filter((item) => {
     if (filterStatus === "all") return true;

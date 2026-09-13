@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { ShieldAlert, Plus, Trash2, CheckCircle2, Car, User, Search, RefreshCw } from "lucide-react";
+import { ShieldAlert, Plus, Trash2, CheckCircle2, Car, User, Search, RefreshCw, AlertCircle } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { watchlistService } from "../services/watchlistService";
+import { INITIAL_WATCHLIST } from "../data/watchlistData";
 
 export default function WatchlistPage() {
-  const [watchlist, setWatchlist] = useState([]);
+  const [watchlist, setWatchlist] = useState(INITIAL_WATCHLIST);
   const [activeTab, setActiveTab] = useState("vehicle");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Form State
   const [identifier, setIdentifier] = useState("");
@@ -14,8 +16,8 @@ export default function WatchlistPage() {
 
   const loadWatchlist = async () => {
     setLoading(true);
-    const { data } = await supabase.from("watchlist").select("*").order("created_at", { ascending: false });
-    if (data) {
+    const { data } = await watchlistService.getWatchlist();
+    if (data && data.length > 0) {
       setWatchlist(data);
     }
     setLoading(false);
@@ -29,34 +31,36 @@ export default function WatchlistPage() {
     e.preventDefault();
     if (!identifier) return;
 
-    const { error } = await supabase.from("watchlist").insert([
-      {
-        entity_type: activeTab,
-        identifier: identifier.toUpperCase().trim(),
-        category,
-        description,
-        is_active: true,
-      },
-    ]);
+    const newTarget = {
+      id: `custom-${Date.now()}`,
+      entity_type: activeTab,
+      identifier: identifier.toUpperCase().trim(),
+      category,
+      description: description.trim() || `Manual entry registered by Command Dispatcher`,
+      is_active: true,
+    };
 
-    if (!error) {
-      setIdentifier("");
-      setDescription("");
-      loadWatchlist();
-    }
+    setWatchlist((prev) => [newTarget, ...prev]);
+    setIdentifier("");
+    setDescription("");
+
+    await watchlistService.addTarget(newTarget);
   };
 
   const toggleActive = async (id, currentStatus) => {
-    await supabase.from("watchlist").update({ is_active: !currentStatus }).eq("id", id);
-    loadWatchlist();
+    setWatchlist((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, is_active: !currentStatus } : w))
+    );
+    await watchlistService.toggleActive(id, currentStatus);
   };
 
   const handleDelete = async (id) => {
-    await supabase.from("watchlist").delete().eq("id", id);
-    loadWatchlist();
+    setWatchlist((prev) => prev.filter((w) => w.id !== id));
+    await watchlistService.deleteTarget(id);
   };
 
   const filteredItems = watchlist.filter((w) => w.entity_type === activeTab);
+
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
@@ -201,13 +205,14 @@ export default function WatchlistPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => toggleActive(entry.id, entry.is_active)}
-                      className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${
+                      className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-all flex items-center gap-1.5 ${
                         entry.is_active
                           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                           : "bg-[#0a0e14] text-[#7d8da3] border-[#1e2a3a]"
                       }`}
                     >
-                      {entry.is_active ? "? Active Monitoring" : "? Inactive"}
+                      <span className={`h-1.5 w-1.5 rounded-full ${entry.is_active ? "bg-emerald-400 animate-pulse" : "bg-gray-500"}`} />
+                      {entry.is_active ? "Active Monitoring" : "Inactive"}
                     </button>
                     <button
                       onClick={() => handleDelete(entry.id)}

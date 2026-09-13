@@ -8,6 +8,8 @@ import { INITIAL_CAMERAS } from "../data/camerasData";
 import gujaratBorder from "../data/gujaratBorder.json";
 import { useLanguage } from "../context/LanguageContext";
 
+import { alertService } from "../services/alertService";
+
 // Custom pin icons with glowing pulse
 const createCustomIcon = (color) => {
   return L.divIcon({
@@ -94,7 +96,18 @@ export default function DashboardPage({ setActivePage }) {
         setCameras(INITIAL_CAMERAS);
       }
     };
+
+    const loadAlertCount = async () => {
+      try {
+        const { data } = await alertService.getAlerts();
+        if (data && data.length > 0) {
+          setStats((prev) => ({ ...prev, alertsToday: data.length }));
+        }
+      } catch (e) {}
+    };
+
     loadCameras();
+    loadAlertCount();
   }, []);
 
   const activeLayer = GOOGLE_MAP_LAYERS[mapType];

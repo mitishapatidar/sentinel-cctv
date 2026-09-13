@@ -284,3 +284,78 @@ def get_hls_segment(cam_id: str, segment_file: str):
         except Exception as e2:
             raise HTTPException(status_code=502, detail=f"Failed to fetch segment: {e2}")
 
+def supabase_api_request(endpoint: str, method: str = "GET", data: dict = None):
+    """Executes authenticated Supabase REST request using service role key (bypasses client RLS)."""
+    if not SUPABASE_KEY:
+        return None
+    url = f"{SUPABASE_URL}/rest/v1/{endpoint}"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+    payload = json.dumps(data).encode("utf-8") if data is not None else None
+    req = urllib.request.Request(url, data=payload, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            content = resp.read().decode("utf-8")
+            return json.loads(content) if content else {}
+    except Exception as e:
+        print(f"[Backend Supabase Proxy] {method} {endpoint} error: {e}")
+        return None
+
+@app.get("/api/alerts")
+def get_alerts():
+    """Returns real-time ANPR and security alerts bypassing client-side RLS restrictions."""
+    res = supabase_api_request("alerts?select=*,cameras(name,city)&order=created_at.desc")
+    if res is not None:
+        return res
+    return []
+
+@app.patch("/api/alerts/{alert_id}")
+def update_alert(alert_id: str, payload: dict):
+    """Updates the workflow status of an alert (pending, acknowledged, resolved)."""
+    res = supabase_api_request(f"alerts?id=eq.{alert_id}", method="PATCH", data=payload)
+    return res or {"status": "ok"}
+
+@app.get("/api/watchlist")
+def get_watchlist(entity_type: Optional[str] = None):
+    """Returns active surveillance targets from watchlist."""
+    query = "watchlist?select=*&order=created_at.desc"
+    if entity_type:
+        query += f"&entity_type=eq.{entity_type}"
+    res = supabase_api_request(query)
+    if res is not None:
+        return res
+    return []
+
+@app.post("/api/watchlist")
+def add_watchlist_entry(payload: dict):
+    """Registers a new vehicle or suspect person to the surveillance watchlist."""
+    res = supabase_api_request("watchlist", method="POST", data=payload)
+    return res or {"status": "ok"}
+
+@app.delete("/api/watchlist/{item_id}")
+def delete_watchlist_entry(item_id: str):
+    """Removes a target from the watchlist repository."""
+    res = supabase_api_request(f"watchlist?id=eq.{item_id}", method="DELETE")
+    return res or {"status": "deleted"}
+
+@app.patch("/api/watchlist/{item_id}")
+def toggle_watchlist_entry(item_id: str, payload: dict):
+    """Updates active monitoring status of a target."""
+    res = supabase_api_request(f"watchlist?id=eq.{item_id}", method="PATCH", data=payload)
+    return res or {"status": "updated"}
+
+@app.get("/api/detections")
+def get_detections(plate: Optional[str] = None, limit: int = 50):
+    """Returns vehicle trajectory detections."""
+    query = f"detections?select=*,cameras(name,city,lat,lng)&order=detected_at.desc&limit={limit}"
+    if plate:
+        query = f"detections?select=*,cameras(name,city,lat,lng)&plate_number=eq.{plate}&order=detected_at.asc"
+    res = supabase_api_request(query)
+    if res is not None:
+        return res
+    return []
+
