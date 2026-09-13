@@ -31,6 +31,33 @@ export default function App() {
     roleKey: "admin",
   });
 
+  const [trackingPlate, setTrackingPlate] = useState(() => {
+    try {
+      return localStorage.getItem("sentinel_search_plate") || "GJ-01-AB-1234";
+    } catch (e) {
+      return "GJ-01-AB-1234";
+    }
+  });
+
+  const handleTrackVehicle = (target) => {
+    let plate = typeof target === "string" ? target : null;
+    if (target && typeof target === "object") {
+      plate = target.target || target.plate_number;
+      if (!plate) {
+        const text = `${target.title || ""} ${target.message || ""}`;
+        const match = text.match(/[A-Z]{2}[-\s]?[0-9]{1,2}[-\s]?[A-Z]{1,3}[-\s]?[0-9]{4}/i);
+        if (match) plate = match[0].toUpperCase();
+      }
+    }
+    if (plate) {
+      setTrackingPlate(plate);
+      try {
+        localStorage.setItem("sentinel_search_plate", plate);
+      } catch (e) {}
+    }
+    setActivePage("vehicle-search");
+  };
+
   // Toggle sidebar collapse / expand with persistence
   const toggleSidebar = () => {
     setSidebarOpen((prev) => {
@@ -94,7 +121,7 @@ export default function App() {
   return (
     <div className="h-screen w-screen bg-[#0a0e14] text-[#e6edf5] flex flex-col overflow-hidden relative">
       {/* Realtime Floating Toast for Incoming Alerts */}
-      <AlertToastNotification onInspectAlert={() => setActivePage("alerts")} />
+      <AlertToastNotification onInspectAlert={handleTrackVehicle} />
 
       {/* Navbar with Always-Visible Hamburger Toggle */}
       <Navbar
@@ -128,9 +155,9 @@ export default function App() {
         <main className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
           {activePage === "dashboard" && <DashboardPage setActivePage={setActivePage} />}
           {activePage === "cameras" && <CameraGridPage />}
-          {activePage === "vehicle-search" && <VehicleSearchPage />}
+          {activePage === "vehicle-search" && <VehicleSearchPage initialPlate={trackingPlate} />}
           {activePage === "watchlist" && <WatchlistPage />}
-          {activePage === "alerts" && <AlertsPage />}
+          {activePage === "alerts" && <AlertsPage setActivePage={setActivePage} onTrackVehicle={handleTrackVehicle} />}
           {activePage === "registry" && <RegistryPage setActivePage={setActivePage} />}
           {activePage === "audit-logs" && <AuditLogsPage />}
         </main>

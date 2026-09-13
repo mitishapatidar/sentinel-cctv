@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Bell, AlertTriangle, ShieldAlert, Check, X, Eye, Clock, MapPin, Radio, RefreshCw } from "lucide-react";
+import { Bell, AlertTriangle, ShieldAlert, Check, X, Eye, Clock, MapPin, Radio, RefreshCw, Car, Navigation } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { alertService } from "../services/alertService";
 import { INITIAL_ALERTS } from "../data/alertsData";
 
-export default function AlertsPage() {
+export default function AlertsPage({ setActivePage, onTrackVehicle }) {
   const [alerts, setAlerts] = useState(INITIAL_ALERTS);
   const [filterStatus, setFilterStatus] = useState("all");
   const [loading, setLoading] = useState(false);
@@ -39,6 +39,27 @@ export default function AlertsPage() {
     };
   }, []);
 
+  const extractPlate = (item) => {
+    if (item.target) return item.target.toUpperCase();
+    if (item.plate_number) return item.plate_number.toUpperCase();
+    const text = `${item.title || ""} ${item.message || ""}`;
+    const match = text.match(/[A-Z]{2}[-\s]?[0-9]{1,2}[-\s]?[A-Z]{1,3}[-\s]?[0-9]{4}/i);
+    if (match) return match[0].toUpperCase();
+    return "GJ-01-AB-1234";
+  };
+
+  const handleTrackAlert = (item) => {
+    const plate = extractPlate(item);
+    if (onTrackVehicle) {
+      onTrackVehicle(plate);
+    } else if (setActivePage) {
+      try {
+        localStorage.setItem("sentinel_search_plate", plate);
+      } catch (e) {}
+      setActivePage("vehicle-search");
+    }
+  };
+
   const handleUpdateStatus = async (id, newStatus) => {
     // Update local state immediately for responsive UI
     setAlerts((prev) =>
@@ -48,7 +69,6 @@ export default function AlertsPage() {
     // Update via alertService (syncs to localStorage, backend API proxy, and Supabase)
     await alertService.updateStatus(id, newStatus);
   };
-
 
   const filteredAlerts = alerts.filter((item) => {
     if (filterStatus === "all") return true;
@@ -67,7 +87,7 @@ export default function AlertsPage() {
             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
             <h1 className="text-xl font-bold text-white tracking-wide">Real-time Emergency Alert Feed</h1>
           </div>
-          <p className="text-xs text-[#7d8da3] mt-0.5">Automated Event Dispatching • Supabase Realtime Telemetry Connected</p>
+          <p className="text-xs text-[#7d8da3] mt-0.5">Automated Event Dispatching • Click any alert to reconstruct vehicle route</p>
         </div>
 
         {/* Filter buttons */}
@@ -106,16 +126,19 @@ export default function AlertsPage() {
 
             const camName = item.cameras?.name || "State Highway Checkpoint";
             const camCity = item.cameras?.city || "Gujarat Network";
+            const targetPlate = extractPlate(item);
 
             return (
               <div
                 key={item.id}
+                onClick={() => handleTrackAlert(item)}
                 className={`bg-[#111823] border border-[#1e2a3a] rounded-2xl p-5 shadow-lg ${
                   borderColors[item.severity] || borderColors.medium
-                } flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all`}
+                } flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-500/60 hover:bg-[#131d2b] cursor-pointer group`}
+                title={`Click to track route of ${targetPlate}`}
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <span className="font-mono text-xs font-bold text-blue-400">
                       {item.alert_code || `ALT-${item.id.toString().slice(0, 5)}`}
                     </span>
@@ -146,7 +169,14 @@ export default function AlertsPage() {
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-bold text-white">{item.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                      {item.title}
+                    </h3>
+                    <span className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity font-semibold flex items-center gap-0.5 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
+                      <Navigation className="h-2.5 w-2.5" /> Track Route ↗
+                    </span>
+                  </div>
                   <p className="text-xs text-[#7d8da3] mt-1 leading-relaxed">{item.message}</p>
 
                   <div className="flex flex-wrap items-center gap-4 text-[11px] text-[#7d8da3] mt-3">
@@ -162,10 +192,26 @@ export default function AlertsPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2 shrink-0 border-t md:border-t-0 border-[#1e2a3a] pt-3 md:pt-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0 border-t md:border-t-0 border-[#1e2a3a] pt-3 md:pt-0">
+                  {/* Dedicated Track Vehicle Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTrackAlert(item);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-bold bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/40 px-3 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-600/10"
+                    title={`Open trajectory reconstruction for ${targetPlate}`}
+                  >
+                    <Car className="h-3.5 w-3.5" />
+                    Track Vehicle ↗
+                  </button>
+
                   {item.status === "pending" && (
                     <button
-                      onClick={() => handleUpdateStatus(item.id, "acknowledged")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUpdateStatus(item.id, "acknowledged");
+                      }}
                       className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-600/20"
                     >
                       <Check className="h-3.5 w-3.5" />
@@ -174,7 +220,10 @@ export default function AlertsPage() {
                   )}
                   {item.status === "acknowledged" && (
                     <button
-                      onClick={() => handleUpdateStatus(item.id, "resolved")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUpdateStatus(item.id, "resolved");
+                      }}
                       className="flex items-center gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-600/20"
                     >
                       <Check className="h-3.5 w-3.5" />
@@ -183,7 +232,10 @@ export default function AlertsPage() {
                   )}
                   {item.status !== "resolved" && (
                     <button
-                      onClick={() => handleUpdateStatus(item.id, "dismissed")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUpdateStatus(item.id, "dismissed");
+                      }}
                       className="flex items-center gap-1.5 text-xs font-semibold bg-[#0a0e14] hover:bg-[#16233b] border border-[#1e2a3a] text-[#7d8da3] hover:text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -199,3 +251,4 @@ export default function AlertsPage() {
     </div>
   );
 }
+

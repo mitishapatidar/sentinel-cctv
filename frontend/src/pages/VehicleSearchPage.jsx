@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Car, Calendar, Clock, MapPin, CheckCircle, AlertTriangle, ArrowRight, Download, Eye, Printer, Shield } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Polyline, Popup, GeoJSON } from "react-leaflet";
 import L from "leaflet";
@@ -27,11 +27,18 @@ const createNumberedIcon = (number, isAlert = false) => {
   });
 };
 
-export default function VehicleSearchPage() {
-  const [query, setQuery] = useState("GJ-01-AB-1234");
+export default function VehicleSearchPage({ initialPlate }) {
+  const [query, setQuery] = useState(() => {
+    try {
+      return initialPlate || localStorage.getItem("sentinel_search_plate") || "GJ-01-AB-1234";
+    } catch (e) {
+      return "GJ-01-AB-1234";
+    }
+  });
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
+
 
   const mockTraffics = {
     "GJ-01-AB-1234": {
@@ -655,6 +662,14 @@ export default function VehicleSearchPage() {
       }
     }, 250);
   };
+
+  useEffect(() => {
+    const target = (initialPlate || localStorage.getItem("sentinel_search_plate") || query || "GJ-01-AB-1234").trim().toUpperCase();
+    if (target) {
+      setQuery(target);
+      handleSearch(target);
+    }
+  }, [initialPlate]);
 
   const routeCoordinates = results ? results.timeline.map((t) => [t.lat, t.lng]) : [];
 
