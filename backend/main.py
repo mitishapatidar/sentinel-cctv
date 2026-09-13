@@ -34,7 +34,15 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 cj = http.cookiejar.CookieJar()
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
 
+import time
+
+last_login_time = 0
+
 def login_to_cctv():
+    global last_login_time
+    now = time.time()
+    if now - last_login_time < 30:
+        return True
     try:
         login_url = "https://cctv.corp8.cloud/auth/login"
         cctv_email = os.getenv("CCTV_GATEWAY_EMAIL", "sentialcctv@gmail.com")
@@ -45,6 +53,7 @@ def login_to_cctv():
         }).encode("utf-8")
         req = urllib.request.Request(login_url, data=data, headers={"User-Agent": "Mozilla/5.0"})
         res = opener.open(req)
+        last_login_time = now
         print("[Relay] Authenticated with CCTV Gateway. Status:", res.status)
         return True
     except Exception as e:
@@ -97,12 +106,18 @@ def get_hls_manifest(cam_id: str):
 
 @app.get("/stream/{cam_id}/{segment_file}")
 def get_hls_segment(cam_id: str, segment_file: str):
-    """Proxies the TS video segments."""
+    """Proxies the TS video segments with auto-relogin fallback."""
+    target_url = f"https://cctv.corp8.cloud/{cam_id}/{segment_file}"
     try:
-        target_url = f"https://cctv.corp8.cloud/{cam_id}/{segment_file}"
         req = urllib.request.Request(target_url, headers={"User-Agent": "Mozilla/5.0"})
-        res = opener.open(req, timeout=25)
+        res = opener.open(req, timeout=20)
         return Response(content=res.read(), media_type="video/MP2T")
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch segment: {e}")
+        login_to_cctv()
+        try:
+            req = urllib.request.Request(target_url, headers={"User-Agent": "Mozilla/5.0"})
+            res = opener.open(req, timeout=20)
+            return Response(content=res.read(), media_type="video/MP2T")
+        except Exception as e2:
+            raise HTTPException(status_code=502, detail=f"Failed to fetch segment: {e2}")
 
