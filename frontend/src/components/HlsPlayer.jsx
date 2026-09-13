@@ -31,20 +31,48 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId }) {
     // Pick deterministic video based on camera ID hash
     const feedIndex = Math.abs((cameraId || "cam01").split("").reduce((a, b) => a + b.charCodeAt(0), 0)) % SURVEILLANCE_VIDEO_FEEDS.length;
     const fallbackUrl = SURVEILLANCE_VIDEO_FEEDS[feedIndex];
+    let fallbackTimeout = null;
+    let networkRetries = 0;
+
+    const switchToFallback = () => {
+      if (hls) {
+        try { hls.destroy(); } catch (_) {}
+        hls = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.src = fallbackUrl;
+        videoRef.current.loop = true;
+        videoRef.current.muted = true;
+        videoRef.current.play().catch(() => {});
+        setUsingFallbackVideo(true);
+      }
+      setLoading(false);
+    };
 
     const loadStream = () => {
       if (Hls.isSupported() && videoRef.current && streamUrl && streamUrl.endsWith(".m3u8")) {
+        // Fast timeout: if upstream stream doesn't connect within 4.5s, switch to fallback loop immediately
+        fallbackTimeout = setTimeout(() => {
+          switchToFallback();
+        }, 4500);
+
         hls = new Hls({
           enableWorker: true,
           lowLatencyMode: true,
-          backBufferLength: 30,
+          backBufferLength: 15,
+          manifestLoadingTimeOut: 4000,
+          fragLoadingTimeOut: 6000,
+          manifestLoadingMaxRetry: 1,
+          fragLoadingMaxRetry: 2,
         });
 
         hls.loadSource(streamUrl);
         hls.attachMedia(videoRef.current);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          clearTimeout(fallbackTimeout);
           setLoading(false);
+          setUsingFallbackVideo(false);
           if (videoRef.current) {
             videoRef.current.muted = true;
             videoRef.current.play().catch((err) => console.log("Autoplay caught:", err));
@@ -53,35 +81,39 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId }) {
 
         hls.on(Hls.Events.ERROR, (event, data) => {
           if (data.fatal) {
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              networkRetries++;
+              if (networkRetries <= 1) {
                 hls.startLoad();
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
+              } else {
+                clearTimeout(fallbackTimeout);
+                switchToFallback();
+              }
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              try {
                 hls.recoverMediaError();
-                break;
-              default:
-                hls.destroy();
-                setLoading(false);
-                break;
+              } catch (_) {
+                clearTimeout(fallbackTimeout);
+                switchToFallback();
+              }
+            } else {
+              clearTimeout(fallbackTimeout);
+              switchToFallback();
             }
           }
         });
       } else if (videoRef.current) {
-        // Direct MP4 / fallback playback
-        videoRef.current.src = fallbackUrl;
-        videoRef.current.loop = true;
-        videoRef.current.muted = true;
-        videoRef.current.play().catch(() => {});
-        setUsingFallbackVideo(true);
-        setLoading(false);
+        switchToFallback();
       }
     };
 
     loadStream();
 
     return () => {
-      if (hls) hls.destroy();
+      if (fallbackTimeout) clearTimeout(fallbackTimeout);
+      if (hls) {
+        try { hls.destroy(); } catch (_) {}
+      }
     };
   }, [streamUrl, cameraId]);
 
