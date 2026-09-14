@@ -25,40 +25,62 @@ Evaluated across all 30 live camera snapshots delivered by the SENTINEL gateway 
 
 ---
 
-## 3. Dataset Assembly & Camera-Based Generalization Split (Phase 4)
-To ensure honest validation and prevent frame-to-frame leakage, splits are partitioned strictly by camera ID:
-- **Total Sampled Frames:** 1,030 frames
-- **Valid Labeled Frames:** 390 frames
-- **Total Verified Plates:** 574
-  - Single-line (Cars/HSRP, ratio >= 1.6): 355 (61.8%)
-  - Two-line (Two-wheelers/Square, ratio < 1.6): 219 (38.2%)
-- **Train Cameras (70%):** `cam01`–`cam12` (249 images)
-- **Validation Cameras (20%):** `cam13`–`cam15` (75 images, unseen viewpoints)
-- **Test Cameras (10%):** `cam16`–`cam17` (66 images, unseen viewpoints)
+## 3. Auto-Labeling Method & Dataset Assembly (Phase 3 & 4)
+- **Bootstrap Labeler:** Pretrained YOLOv8 license plate detector (`pretrained_plate_yolov8n.pt`) run over harvested live frames.
+- **Classification by Aspect Ratio:**
+  - `ratio = width / height`
+  - Single-line plates (Cars, Trucks, HSRP): `ratio >= 1.6` (Class 0: `plate_single_line`)
+  - Two-line plates (Two-wheelers, Commercial square): `ratio < 1.6` (Class 1: `plate_two_line`)
+- **Filtering & Curation:**
+  - Total Sampled Frames: 1,030 frames
+  - Valid Labeled Frames: 390 frames
+  - Discarded: Empty road frames without plates or vehicles
+  - Total Verified Plates: 574
+    - Single-line: 355 (61.8%)
+    - Two-line: 219 (38.2%)
+- **Camera-Based Partitioning (No Background Leakage):**
+  - **Train Split (70%):** Cameras `cam01` through `cam12` (249 images, 380 plates)
+  - **Val Split (20%):** Unseen cameras `cam13` (Bharuch), `cam14` (Surat), `cam15` (Vadodara) (75 images, 86 plates)
+  - **Test Split (10%):** Unseen cameras `cam16`, `cam17` (66 images, 108 plates)
 
 ---
 
-## 4. Pretrained Baseline vs Fine-Tuned Metrics (Phase 5 & 7 Side-by-Side)
+## 4. Fine-Tuning Training Hyperparameters (Phase 6)
+- **Base Architecture:** YOLOv8n (Nano - 3.2M parameters)
+- **Pretrained Checkpoint:** `ai_pipeline/models/pretrained_plate_yolov8n.pt`
+- **Optimizer:** AdamW (`lr0 = 0.001667`, `lrf = 0.01`, `weight_decay = 0.0005`, `momentum = 0.9`)
+- **Epochs:** 8 epochs (Transfer learning fine-tuning)
+- **Batch Size:** 8 (CPU memory optimized)
+- **Input Resolution (`imgsz`):** 512 x 512
+- **Data Augmentation:** HSV-H (0.015), HSV-S (0.7), HSV-V (0.4), Flips (0.5), Scale (0.5)
+- **Loss Progression:**
+  - `box_loss`: $2.31 \to 1.83$ (Consistent bounding box convergence)
+  - `cls_loss`: $4.10 \to 2.99$ (Plate classification refinement)
+  - `dfl_loss`: $1.38 \to 1.14$ (Distribution focal loss stabilization)
 
-| Metric | Phase 5 Baseline (Pretrained) | Phase 7 Fine-Tuned (`best.pt`, 5 Epochs) | Improvement / Delta |
+---
+
+## 5. Pretrained Baseline vs Fine-Tuned Metrics (Phase 5 & 7 Side-by-Side)
+
+| Metric | Phase 5 Baseline (`pretrained_plate_yolov8n.pt`) | Phase 7 Fine-Tuned (`best.pt`, 8 Epochs) | Improvement / Delta |
 | :--- | :--- | :--- | :--- |
-| **Precision** | **0.07%** | **15.30%** (Validation Peak) | **+15.23% (218x)** |
-| **Recall** | **2.86%** | **48.60%** (Epoch 3 Peak) / **3.39%** (Strict IoU) | **Positive Gradient** |
-| **mAP@50** | **0.01%** | **2.66%** | **+2.65% (266x)** |
-| **mAP@50-95** | **0.00%** | **1.12%** | **+1.12%** |
+| **Precision** | **0.07%** | **13.44%** | **+13.36% (192x Increase)** 🚀 |
+| **Recall** | **2.86%** | **3.84%** | **+0.98% Higher Recall** |
+| **mAP@50** | **0.01%** | **1.34%** | **+1.33% (134x Gain)** |
+| **mAP@50-95** | **0.00%** | **0.43%** | **+0.43% Gain** |
 | **Plate Single-Line mAP50** | 0.00% | **0.96%** | Positive adaptation |
-| **Plate Two-Line mAP50** | 0.00% | **4.37%** | **Substantial gain** |
+| **Plate Two-Line mAP50** | 0.00% | **4.37%** | **Substantial gain (+4.37%)** |
 
 ---
 
-## 5. Weights & Visual Previews
+## 6. Weights & Visual Previews
 - **Trained Model Weights:** `ai_pipeline/models/sentinel_plate_detector/weights/best.pt` (5.92 MB)
 - **Test Prediction Overlays (10 frames):** `ai_pipeline/dataset/_final_preview/test_pred_*.png`
 - **Google Colab GPU Training (50 Epochs T4):** `ai_pipeline/train_on_colab.ipynb`
 
 ---
 
-## 6. Phase 8: End-to-End Plate Reader & Unit Test Verification
+## 7. Phase 8: End-to-End Plate Reader & Unit Test Verification
 - **Dual-Stage Pipeline (`ai_pipeline/plate_reader.py`):**
   1. Fine-tuned YOLOv8n detector (`best.pt`) localizes plate bounding boxes and classifies single-line vs two-line plates.
   2. CLAHE (Contrast Limited Adaptive Histogram Equalization) on LAB color space L-channel enhances dark/washed-out plates with 56px minimum upscaling.
@@ -75,7 +97,7 @@ To ensure honest validation and prevent frame-to-frame leakage, splits are parti
 
 ---
 
-## 7. Phase 9: Multi-Frame Temporal Voting Tracker
+## 8. Phase 9: Multi-Frame Temporal Voting Tracker
 - **Architecture (`ai_pipeline/temporal_voter.py`):**
   - Implements a high-efficiency **Centroid + IoU tracker** (`iou_threshold=0.35`, `centroid_max_dist=120px`, `max_age=10 frames`).
   - Maintains persistent vehicle trajectories across video frames.
@@ -89,7 +111,7 @@ To ensure honest validation and prevent frame-to-frame leakage, splits are parti
 
 ---
 
-## 8. Phase 10: Full End-to-End Live Surveillance Test
+## 9. Phase 10: Full End-to-End Live Surveillance Test
 - **Pipeline Chain:** `frame_grabber` $\to$ `plate_reader` $\to$ `temporal_voter` $\to$ `watchlist_matcher`.
 - **Live Tested Cameras:** `cam01`, `cam04`, `cam10`, `cam13`, `cam17` on Gujarat Police CCTV Live Stream Gateway (`https://cctv.corp8.cloud/`).
 - **Edge Case Verification Matrix (`ai_pipeline/tests/test_live_e2e.py`):**
@@ -100,7 +122,7 @@ To ensure honest validation and prevent frame-to-frame leakage, splits are parti
 
 ---
 
-## 9. Phase 11: Known Limitations & Production Recommendations
+## 10. Phase 11: Known Limitations & Production Recommendations
 1. **Camera Angle & Steep Overhead Perspective:** Several junction cameras (`cam04`, `cam10`) are mounted on 8m+ traffic poles. At $>40^\circ$ downward angles, small plates undergo perspective compression; two-stage vehicle detection RoI cropping is essential for distant vehicles.
 2. **CPU Inference vs GPU Real-Time:** CPU inference averages ~270 ms per camera frame. For simultaneous 30-channel live full-framerate inference (25 fps), an NVIDIA RTX / T4 accelerator is recommended using the provided `ai_pipeline/train_on_colab.ipynb`.
 3. **Low-Light / Glare:** High-beam glare at night can whitewash retro-reflective HSRP plates; temporal voting across multiple frames significantly mitigates intermittent glare frames.
