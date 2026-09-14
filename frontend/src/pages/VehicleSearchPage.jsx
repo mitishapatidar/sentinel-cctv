@@ -569,6 +569,154 @@ export default function VehicleSearchPage({ initialPlate }) {
         },
       ],
     },
+    "GJ-02-BA-4589": {
+      plate: "GJ-02-BA-4589",
+      model: "Black Mahindra Scorpio",
+      category: "CONTRABAND LIQUOR SMUGGLING (Palanpur Highway Checkpost)",
+      isWatchlist: true,
+      severity: "critical",
+      totalSightings: 3,
+      timeline: [
+        {
+          order: 1,
+          camId: "cam09",
+          name: "09 Deesa Highway Palanpur",
+          city: "Palanpur",
+          lat: 24.1724,
+          lng: 72.4346,
+          timestamp: "13-09-2026 17:30:00",
+          confidence: "97.4%",
+          speed: "75 km/h",
+          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
+        },
+        {
+          order: 2,
+          camId: "cam10",
+          name: "10 Mehsana Bypass Junction",
+          city: "Mehsana",
+          lat: 23.588,
+          lng: 72.3693,
+          timestamp: "13-09-2026 19:00:12",
+          confidence: "96.1%",
+          speed: "68 km/h",
+          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
+        },
+        {
+          order: 3,
+          camId: "cam05",
+          name: "05 Visat teen Rasta",
+          city: "Ahmedabad",
+          lat: 23.1042,
+          lng: 72.5932,
+          timestamp: "13-09-2026 20:45:30",
+          confidence: "98.9%",
+          speed: "55 km/h",
+          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
+        },
+      ],
+    },
+    "GJ-04-DE-7712": {
+      plate: "GJ-04-DE-7712",
+      model: "White Toyota Etios",
+      category: "TOLL PLAZA FASTAG EVADER & CRASH (Tarapur Toll Plaza)",
+      isWatchlist: true,
+      severity: "high",
+      totalSightings: 2,
+      timeline: [
+        {
+          order: 1,
+          camId: "cam07",
+          name: "07 Ghogha Circle",
+          city: "Bhavnagar",
+          lat: 21.7645,
+          lng: 72.1519,
+          timestamp: "13-09-2026 18:15:00",
+          confidence: "95.5%",
+          speed: "82 km/h",
+          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
+        },
+        {
+          order: 2,
+          camId: "cam15",
+          name: "15 Vadodara Central",
+          city: "Vadodara",
+          lat: 22.3072,
+          lng: 73.1812,
+          timestamp: "13-09-2026 20:50:00",
+          confidence: "97.2%",
+          speed: "64 km/h",
+          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
+        },
+      ],
+    },
+    "GJ-14-KK-3390": {
+      plate: "GJ-14-KK-3390",
+      model: "Silver Maruti Eeco Van",
+      category: "SUSPECTED ABDUCTION / MISSING PERSON (Amreli Town Case #91)",
+      isWatchlist: true,
+      severity: "critical",
+      totalSightings: 2,
+      timeline: [
+        {
+          order: 1,
+          camId: "cam03",
+          name: "03 Indira Circle",
+          city: "Rajkot",
+          lat: 22.2965,
+          lng: 70.7744,
+          timestamp: "13-09-2026 18:40:00",
+          confidence: "96.4%",
+          speed: "50 km/h",
+          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
+        },
+        {
+          order: 2,
+          camId: "cam11",
+          name: "11 Khambhalia Gate",
+          city: "Jamnagar",
+          lat: 22.4707,
+          lng: 70.0577,
+          timestamp: "13-09-2026 20:25:10",
+          confidence: "97.9%",
+          speed: "60 km/h",
+          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
+        },
+      ],
+    },
+    "GJ-09-PP-6211": {
+      plate: "GJ-09-PP-6211",
+      model: "Black Mahindra Thar",
+      category: "UNREGISTERED RASH DRIVING & WEAPONS BRANDISHING (Sabarkantha PS)",
+      isWatchlist: true,
+      severity: "high",
+      totalSightings: 2,
+      timeline: [
+        {
+          order: 1,
+          camId: "cam12",
+          name: "12 Tri Mandir Adalaj Tollnaka",
+          city: "Gandhinagar",
+          lat: 23.1673,
+          lng: 72.5812,
+          timestamp: "13-09-2026 19:20:00",
+          confidence: "98.1%",
+          speed: "88 km/h",
+          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
+        },
+        {
+          order: 2,
+          camId: "cam02",
+          name: "02 Janpath",
+          city: "Ahmedabad",
+          lat: 23.0225,
+          lng: 72.5714,
+          timestamp: "13-09-2026 20:15:30",
+          confidence: "99.0%",
+          speed: "45 km/h",
+          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
+        },
+      ],
+    },
   };
 
   const handleSearch = async (plateToSearch) => {
@@ -677,7 +825,7 @@ export default function VehicleSearchPage({ initialPlate }) {
     <div className="flex-1 flex flex-col overflow-y-auto">
       {/* Search Header */}
       <div className="border-b border-[#1e2a3a] px-6 py-6 bg-[#111823]">
-        <div className="max-w-4xl">
+        <div className="max-w-6xl">
           <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 mb-1">
             <Car className="h-4 w-4" />
             <span>MANDATORY TEST CASE • STATEWIDE ANPR TRAJECTORY RECONSTRUCTION</span>
@@ -702,39 +850,65 @@ export default function VehicleSearchPage({ initialPlate }) {
             <button
               onClick={() => handleSearch()}
               disabled={searching}
-              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 cursor-pointer flex items-center justify-center gap-2"
+              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 cursor-pointer flex items-center justify-center gap-2 shrink-0"
             >
               <Search className="h-4 w-4" />
               {searching ? "Tracing Route..." : "Track Trajectory"}
             </button>
           </div>
 
-          {/* Quick Demo Test Buttons */}
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#7d8da3]">
-            <span className="font-semibold text-gray-400">Quick Surveillance Targets:</span>
-            {[
-              { plate: "GJ-01-AB-1234", label: "GJ-01-AB-1234 (Stolen Swift)", color: "border-red-500/30 text-red-400 hover:bg-red-500/10" },
-              { plate: "GJ-05-CD-5678", label: "GJ-05-CD-5678 (Amber Alert Creta)", color: "border-red-500/40 text-red-300 hover:bg-red-500/20" },
-              { plate: "GJ-18-XY-9012", label: "GJ-18-XY-9012 (Hit & Run City)", color: "border-orange-500/30 text-orange-400 hover:bg-orange-500/10" },
-              { plate: "GJ-06-ER-3456", label: "GJ-06-ER-3456 (Challan Defaulter)", color: "border-amber-500/30 text-amber-400 hover:bg-amber-500/10" },
-              { plate: "GJ-03-GH-7890", label: "GJ-03-GH-7890 (Contraband Fortuner)", color: "border-purple-500/30 text-purple-400 hover:bg-purple-500/10" },
-              { plate: "GJ-12-KL-4321", label: "GJ-12-KL-4321 (Carjacking Baleno)", color: "border-blue-500/30 text-blue-400 hover:bg-blue-500/10" },
-              { plate: "GJ-15-PQ-2109", label: "GJ-15-PQ-2109 (Armed Heist Seltos)", color: "border-rose-500/30 text-rose-400 hover:bg-rose-500/10" },
-              { plate: "GJ-10-RS-6543", label: "GJ-10-RS-6543 (Stolen Enfield)", color: "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10" },
-              { plate: "GJ-08-TU-1098", label: "GJ-08-TU-1098 (Bolero Evader)", color: "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" },
-              { plate: "GJ-23-VW-5432", label: "GJ-23-VW-5432 (Snatching Activa)", color: "border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" },
-            ].map((t) => (
-              <button
-                key={t.plate}
-                onClick={() => {
-                  setQuery(t.plate);
-                  handleSearch(t.plate);
-                }}
-                className={`px-2.5 py-1 rounded-lg bg-[#0a0e14] border ${t.color} cursor-pointer font-mono text-[11px] transition-all`}
-              >
-                {t.label}
-              </button>
-            ))}
+          {/* Quick Demo Test Buttons in Systematic 4-Column Grid */}
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300">
+                Quick Surveillance Targets
+              </span>
+              <span className="text-[10px] font-mono text-[#7d8da3]">
+                16 Hotlists • 4 Columns Systematic Grid
+              </span>
+            </div>
+
+            {/* Fixed 4 Columns, Auto-Expanding Rows */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              {[
+                // Row 1
+                { plate: "GJ-01-AB-1234", tag: "Stolen Swift", color: "border-red-500/30 text-red-400 hover:bg-red-500/10" },
+                { plate: "GJ-05-CD-5678", tag: "Amber Creta", color: "border-red-500/40 text-red-300 hover:bg-red-500/20" },
+                { plate: "GJ-18-XY-9012", tag: "Hit & Run City", color: "border-orange-500/30 text-orange-400 hover:bg-orange-500/10" },
+                { plate: "GJ-06-ER-3456", tag: "Challan Defaulter", color: "border-amber-500/30 text-amber-400 hover:bg-amber-500/10" },
+
+                // Row 2
+                { plate: "GJ-03-GH-7890", tag: "Contraband Fortuner", color: "border-purple-500/30 text-purple-400 hover:bg-purple-500/10" },
+                { plate: "GJ-12-KL-4321", tag: "Carjacking Baleno", color: "border-blue-500/30 text-blue-400 hover:bg-blue-500/10" },
+                { plate: "GJ-15-PQ-2109", tag: "Armed Heist Seltos", color: "border-rose-500/30 text-rose-400 hover:bg-rose-500/10" },
+                { plate: "GJ-10-RS-6543", tag: "Stolen Enfield", color: "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10" },
+
+                // Row 3
+                { plate: "GJ-08-TU-1098", tag: "Bolero Evader", color: "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" },
+                { plate: "GJ-23-VW-5432", tag: "Snatching Activa", color: "border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" },
+                { plate: "GJ-27-MN-8765", tag: "Overload Brezza", color: "border-amber-500/30 text-amber-400 hover:bg-amber-500/10" },
+                { plate: "GJ-16-ZA-9876", tag: "Cloned Plate i20", color: "border-purple-500/30 text-purple-400 hover:bg-purple-500/10" },
+
+                // Row 4
+                { plate: "GJ-02-BA-4589", tag: "Smuggling Scorpio", color: "border-rose-500/30 text-rose-400 hover:bg-rose-500/10" },
+                { plate: "GJ-04-DE-7712", tag: "Toll Evader", color: "border-blue-500/30 text-blue-400 hover:bg-blue-500/10" },
+                { plate: "GJ-14-KK-3390", tag: "Missing Eeco", color: "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" },
+                { plate: "GJ-09-PP-6211", tag: "Unregistered Thar", color: "border-orange-500/30 text-orange-400 hover:bg-orange-500/10" },
+              ].map((t) => (
+                <button
+                  key={t.plate}
+                  onClick={() => {
+                    setQuery(t.plate);
+                    handleSearch(t.plate);
+                  }}
+                  className={`px-3 py-2 rounded-xl bg-[#0a0e14] border ${t.color} cursor-pointer font-mono text-[11px] transition-all flex items-center justify-between gap-1.5 hover:shadow-sm hover:scale-[1.01]`}
+                  title={`${t.plate} (${t.tag})`}
+                >
+                  <span className="font-bold truncate">{t.plate}</span>
+                  <span className="text-[10px] opacity-80 truncate">({t.tag})</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
