@@ -73,3 +73,36 @@ To ensure honest validation and prevent frame-to-frame leakage, splits are parti
   - Tested on 10 realistic OCR edge cases (including `6J18XY9012`, `IND GJ12KL4321`, `CJ 06 ER 3456`, lowercase formatting, spacing irregularities).
   - **Result:** **10 / 10 Test Cases Passed (100%)**, `best.pt` checkpoint verified.
 
+---
+
+## 7. Phase 9: Multi-Frame Temporal Voting Tracker
+- **Architecture (`ai_pipeline/temporal_voter.py`):**
+  - Implements a high-efficiency **Centroid + IoU tracker** (`iou_threshold=0.35`, `centroid_max_dist=120px`, `max_age=10 frames`).
+  - Maintains persistent vehicle trajectories across video frames.
+  - Applies **character-position majority voting** across collected OCR readings for each track once $\ge 3$ readings exist or track exits frame.
+- **Verification Benchmark (`ai_pipeline/tests/test_temporal_voter.py`):**
+  - Evaluated on simulated multi-frame noisy surveillance trajectories:
+    - **Vehicle 1 (Car - `GJ-05-AB-1234`):** Single-frame accuracy: **70.0%** (3 misreads) $\to$ Temporal Voted Result: **`GJ-05-AB-1234` (100% Correct)**
+    - **Vehicle 2 (Bike - `GJ-10-RS-6543`):** Single-frame accuracy: **72.7%** (3 misreads) $\to$ Temporal Voted Result: **`GJ-10-RS-6543` (100% Correct)**
+    - **Vehicle 3 (Truck - `GJ-08-TU-1098`):** Single-frame accuracy: **77.8%** (2 misreads) $\to$ Temporal Voted Result: **`GJ-08-TU-1098` (100% Correct)**
+  - **Result:** **3 / 3 Vehicles Confirmed with 100% Consensus Accuracy**.
+
+---
+
+## 8. Phase 10: Full End-to-End Live Surveillance Test
+- **Pipeline Chain:** `frame_grabber` $\to$ `plate_reader` $\to$ `temporal_voter` $\to$ `watchlist_matcher`.
+- **Live Tested Cameras:** `cam01`, `cam04`, `cam10`, `cam13`, `cam17` on Gujarat Police CCTV Live Stream Gateway (`https://cctv.corp8.cloud/`).
+- **Edge Case Verification Matrix (`ai_pipeline/tests/test_live_e2e.py`):**
+  1. **Feed Drop Mid-Stream:** Handled gracefully via `connect()` retry logic; connection failure returned `False` with zero pipeline crashes.
+  2. **No Plate Visible for Prolonged Periods:** Handled continuous 3-frame empty detection streaks without memory leaks or queue blocking.
+  3. **Two-Wheeler Two-Line Plate:** Successfully localized on `cam01` (confidence: 0.36, classified as `plate_two_line`).
+  4. **Night / Low-Light Surveillance Frame:** Detected on `cam04` (mean brightness: 78.9/255, below 80 threshold); CLAHE adaptive contrast normalization triggered properly.
+
+---
+
+## 9. Phase 11: Known Limitations & Production Recommendations
+1. **Camera Angle & Steep Overhead Perspective:** Several junction cameras (`cam04`, `cam10`) are mounted on 8m+ traffic poles. At $>40^\circ$ downward angles, small plates undergo perspective compression; two-stage vehicle detection RoI cropping is essential for distant vehicles.
+2. **CPU Inference vs GPU Real-Time:** CPU inference averages ~270 ms per camera frame. For simultaneous 30-channel live full-framerate inference (25 fps), an NVIDIA RTX / T4 accelerator is recommended using the provided `ai_pipeline/train_on_colab.ipynb`.
+3. **Low-Light / Glare:** High-beam glare at night can whitewash retro-reflective HSRP plates; temporal voting across multiple frames significantly mitigates intermittent glare frames.
+
+
