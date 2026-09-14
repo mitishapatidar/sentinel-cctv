@@ -140,7 +140,7 @@ export default function Navbar({
 
           {/* Dropdown Menu */}
           {langDropdownOpen && (
-            <div className="absolute right-0 mt-1.5 w-36 rounded-xl bg-[#111823] border border-[#1e2a3a] shadow-2xl p-1 z-50">
+            <div className="officer-dropdown-menu absolute right-0 mt-2 w-48 rounded-xl bg-[#111823] border-2 border-black dark:border-[#1e2a3a] shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-2.5 py-1 text-[10px] font-bold text-[#5c6b86] uppercase tracking-wider border-b border-[#1e2a3a] mb-1">
                 Select Language
               </div>
@@ -237,7 +237,7 @@ export default function Navbar({
 
           {/* Officer Command Profile Popover Menu */}
           {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-88 rounded-2xl bg-[#111823] border border-[#1e2a3a] shadow-2xl shadow-black/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="officer-dropdown-menu absolute right-0 mt-2 w-80 sm:w-88 rounded-2xl bg-[#111823] border-2 border-black dark:border-[#1e2a3a] shadow-2xl shadow-black/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
               {/* Header: Officer ID & Security Badges */}
               <div className="p-4 border-b border-[#1e2a3a] bg-[#0d131c]">
                 <div className="flex items-start gap-3">
