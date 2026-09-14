@@ -86,25 +86,55 @@ raw_manifest_cache = {}  # cam_id -> (timestamp, raw_text)
 manifest_cache = {}      # backward compatibility
 segment_cache = {}       # (cam_id, segment_file) -> (timestamp, bytes)
 
+CAMERA_RANGES = {
+    "cam01": (7200, 5500, 7190),
+    "cam02": (7201, 5500, 7190),
+    "cam03": (7199, 5500, 7190),
+    "cam04": (7201, 5500, 7190),
+    "cam05": (7201, 5500, 7190),
+    "cam06": (14690, 11000, 14600),
+    "cam07": (7190, 5500, 7180),
+    "cam08": (7189, 5500, 7180),
+    "cam09": (4306, 2800, 4300),
+    "cam10": (7171, 5500, 7160),
+    "cam11": (7180, 5500, 7170),
+    "cam12": (3487, 2000, 3480),
+    "cam13": (7201, 5500, 7190),
+    "cam14": (7201, 5500, 7190),
+    "cam15": (7200, 5500, 7190),
+    "cam16": (5263, 3500, 5250),
+    "cam17": (4320, 2800, 4310),
+    "cam18": (4088, 2800, 4080),
+    "cam19": (8240, 5500, 8230),
+    "cam20": (8229, 5500, 8220),
+    "cam21": (9414, 6500, 9400),
+    "cam22": (7090, 5200, 7080),
+    "cam23": (5987, 4000, 5980),
+    "cam24": (1849, 1000, 1840),
+    "cam25": (7184, 5500, 7180),
+    "cam26": (601, 200, 590),
+    "cam27": (2575, 1500, 2570),
+    "cam28": (2416, 1400, 2410),
+    "cam29": (2719, 1600, 2710),
+    "cam30": (1919, 1100, 1910),
+}
+
 def generate_live_manifest(cam_id: str, num_segments: int = 5) -> str:
-    """Generates an advancing live sliding-window HLS playlist synchronized with real IST daylight."""
+    """Generates an advancing live sliding-window HLS playlist synchronized with real IST daylight per camera."""
     now = time.time()
-    # IST is UTC + 5:30 (19800 seconds)
     ist_epoch = now + 19800
     seconds_in_day = ist_epoch % 86400
     hour_fraction = seconds_in_day / 3600.0
     
-    # 7200 total segments representing 12 hours of real Gujarat CCTV footage
-    # Night recordings: [0 .. 4500] (~9:00 PM to ~4:30 AM)
-    # Daylight recordings: [4500 .. 7190] (~4:30 AM to ~9:00 AM)
+    total_segs, day_start, day_end = CAMERA_RANGES.get(cam_id, (7200, 5500, 7190))
     if 6.0 <= hour_fraction < 18.0:
-        # Daytime (6:00 AM to 6:00 PM IST) -> Maps to daylight segments
+        # Daytime: maps cleanly into THIS camera's real daytime recording
         progress = (hour_fraction - 6.0) / 12.0
-        current_seq = int(4500 + progress * (7190 - 4500))
+        current_seq = int(day_start + progress * (day_end - day_start))
     else:
-        # Nighttime (6:00 PM to 6:00 AM IST) -> Maps to night segments
+        # Nighttime: maps cleanly into THIS camera's real nighttime recording
         progress = ((hour_fraction - 18.0) % 24.0) / 12.0
-        current_seq = int(progress * 4500)
+        current_seq = int(progress * day_start)
         
     lines = [
         "#EXTM3U",
@@ -115,7 +145,7 @@ def generate_live_manifest(cam_id: str, num_segments: int = 5) -> str:
         '#EXT-X-KEY:METHOD=AES-128,URI="http://127.0.0.1:8000/stream/enc.key",IV=0x00000000000000000000000000000000',
     ]
     for i in range(num_segments):
-        seq = (current_seq + i) % 7200
+        seq = (current_seq + i) % total_segs
         lines.append("#EXTINF:6.000000,")
         lines.append(f"http://127.0.0.1:8000/stream/{cam_id}/seg{seq:05d}.ts")
         
@@ -232,7 +262,7 @@ def get_hls_segment(cam_id: str, segment_file: str):
     target_url = f"https://cctv.corp8.cloud/{cam_id}/{segment_file}"
     try:
         session.headers.update({"Referer": "https://cctv.corp8.cloud/"})
-        res = session.get(target_url, timeout=3)
+        res = session.get(target_url, timeout=8)
         seg_bytes = res.content
         if res.status_code == 200 and not seg_bytes.startswith(b"<!doctype") and b"watch time limit" not in seg_bytes:
             if len(segment_cache) > 200:
