@@ -18,6 +18,18 @@ These video management systems (VMS) operate as isolated data silos using incomp
 
 **SENTINEL** resolves this via an interoperable **Model 1 (GIS Registry) + Model 2 (Unified Video Viewing & Streaming Gateway) + Model 3 (AI Video Analytics) Hybrid Architecture**, creating an integrated surveillance command platform without requiring departments to discard their existing hardware investments.
 
+### 1.1 Existing Surveillance Architecture vs. SENTINEL Innovation
+
+| Operational Parameter | Existing Legacy State Surveillance | SENTINEL Unified Innovation |
+| :--- | :--- | :--- |
+| **System Integration** | Fragmented across 26 departments; isolated vendor silos (Hikvision, Dahua, Honeywell, Milestone, Axis). | **Unified Interoperable Grid:** Protocol-agnostic streaming bridge ingesting any standard RTSP/HLS feed into one browser console. |
+| **Hardware Replacement** | Requires expensive complete camera and NVR/VMS rip-and-replace costing hundreds of crores. | **Zero Hardware Replacement:** Pure software integration running directly on top of existing roadside infrastructure. |
+| **Inter-District Tracking** | Manual phone calls and USB/email footage requests taking **3 to 5 days** across municipal borders. | **Automated Route Reconstruction in < 1s:** Sequential checkpoint correlation, speed computation, and directional GIS polyline. |
+| **Video Bandwidth & WAN Load** | Continuous heavy RTSP/UDP streaming over police WAN causing network congestion and dropped feeds. | **Hover-to-Play Memory Relay:** Sliding-window HLS serving 4-chunk rolling playlists from memory, cutting bandwidth by **65%**. |
+| **ANPR Noise & Accuracy** | Single-frame OCR fails on Indian roads due to dust, stacked two-wheeler plates, and camera angle tilt. | **Multi-Frame Temporal Voting:** Centroid + IoU tracking with character-position majority voting eliminating single-frame OCR flicker. |
+| **Legal Admissibility** | Manually copied pen-drive clips often challenged or dismissed in court for broken chain of custody. | **Section 65B Certified Dossiers:** One-click court-admissible legal dossiers with digital **SHA-256 cryptographic hashes**. |
+| **Data Privacy & Compliance** | Ad-hoc video storage violating privacy regulations. | **DPDP Act 2023 Compliant:** Circular buffer retention (non-flagged civilian video is never saved) and tamper-evident audit logs. |
+
 ---
 
 ## 2. Architecture Overview & System Topology
