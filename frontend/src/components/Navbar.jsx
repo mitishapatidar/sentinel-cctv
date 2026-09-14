@@ -10,7 +10,7 @@ export default function Navbar({
   sidebarOpen, 
   onToggleSidebar, 
   liveCount = 30, 
-  alertCount = 3 
+  alertCount = 0 
 }) {
   const { language, setLanguage, t } = useLanguage();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);

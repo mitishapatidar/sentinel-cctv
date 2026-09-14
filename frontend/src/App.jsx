@@ -12,6 +12,8 @@ import AlertsPage from "./pages/AlertsPage";
 import RegistryPage from "./pages/RegistryPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import AlertToastNotification from "./components/AlertToastNotification";
+import { alertService } from "./services/alertService";
+import { INITIAL_ALERTS } from "./data/alertsData";
 
 export default function App() {
   const [view, setView] = useState("landing"); // "landing" | "login" | "forbidden" | "app"
@@ -38,6 +40,55 @@ export default function App() {
       return "GJ-01-AB-1234";
     }
   });
+
+  const [alerts, setAlerts] = useState(INITIAL_ALERTS);
+
+  const fetchAlerts = async () => {
+    try {
+      const { data } = await alertService.getAlerts();
+      if (Array.isArray(data)) {
+        setAlerts(data);
+      }
+    } catch (e) {
+      console.warn("Could not fetch alerts:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlerts();
+    const handleUpdate = () => fetchAlerts();
+    window.addEventListener("sentinel-alerts-updated", handleUpdate);
+
+    const subscription = alertService.subscribeAlerts(() => {
+      fetchAlerts();
+    });
+    return () => {
+      window.removeEventListener("sentinel-alerts-updated", handleUpdate);
+      if (subscription && typeof subscription.unsubscribe === "function") {
+        subscription.unsubscribe();
+      }
+    };
+  }, []);
+
+  const pendingAlerts = alerts.filter((a) => a.status === "pending");
+  const pendingCount = pendingAlerts.length;
+
+  const handleAcknowledgeAlert = async (alertId) => {
+    setAlerts((prev) =>
+      prev.map((a) => (a.id === alertId ? { ...a, status: "acknowledged" } : a))
+    );
+    await alertService.updateStatus(alertId, "acknowledged");
+  };
+
+  const handleMarkAllAlertsRead = async () => {
+    const pendingIds = alerts.filter((a) => a.status === "pending").map((a) => a.id);
+    setAlerts((prev) =>
+      prev.map((a) => (a.status === "pending" ? { ...a, status: "acknowledged" } : a))
+    );
+    for (const id of pendingIds) {
+      await alertService.updateStatus(id, "acknowledged");
+    }
+  };
 
   const handleTrackVehicle = (target) => {
     let plate = typeof target === "string" ? target : null;
@@ -121,7 +172,7 @@ export default function App() {
   return (
     <div className="h-screen w-screen bg-[#0a0e14] text-[#e6edf5] flex flex-col overflow-hidden relative">
       {/* Realtime Floating Toast for Incoming Alerts */}
-      <AlertToastNotification onInspectAlert={handleTrackVehicle} />
+      <AlertToastNotification onInspectAlert={handleTrackVehicle} onNewAlert={fetchAlerts} />
 
       {/* Navbar with Always-Visible Hamburger Toggle */}
       <Navbar
@@ -132,7 +183,7 @@ export default function App() {
         sidebarOpen={sidebarOpen}
         onToggleSidebar={toggleSidebar}
         liveCount={30}
-        alertCount={3}
+        alertCount={pendingCount}
       />
 
       {/* Main Body */}

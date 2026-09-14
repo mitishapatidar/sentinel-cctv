@@ -3,7 +3,7 @@ import { AlertTriangle, ShieldAlert, X, Eye, Bell } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { playAlertChime } from "../utils/audioAlert";
 
-export default function AlertToastNotification({ onInspectAlert }) {
+export default function AlertToastNotification({ onInspectAlert, onNewAlert }) {
   const [activeToast, setActiveToast] = useState(null);
 
   useEffect(() => {
@@ -17,6 +17,7 @@ export default function AlertToastNotification({ onInspectAlert }) {
           console.log("Realtime Alert Triggered:", payload.new);
           playAlertChime(payload.new?.severity || "critical");
           setActiveToast(payload.new);
+          if (onNewAlert) onNewAlert(payload.new);
         }
       )
       .subscribe();

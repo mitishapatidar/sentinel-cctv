@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bell, AlertTriangle, ShieldAlert, Check, X, Eye, Clock, MapPin, Radio, RefreshCw, Car, Navigation } from "lucide-react";
+import { Bell, AlertTriangle, ShieldAlert, Check, X, Eye, Clock, MapPin, Radio, RefreshCw, Car, Navigation, Trash2 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { alertService } from "../services/alertService";
 import { INITIAL_ALERTS } from "../data/alertsData";
@@ -12,7 +12,7 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
   const fetchAlerts = async () => {
     setLoading(true);
     const { data } = await alertService.getAlerts();
-    if (data && data.length > 0) {
+    if (Array.isArray(data)) {
       setAlerts(data);
     }
     setLoading(false);
@@ -68,6 +68,16 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
 
     // Update via alertService (syncs to localStorage, backend API proxy, and Supabase)
     await alertService.updateStatus(id, newStatus);
+    window.dispatchEvent(new Event("sentinel-alerts-updated"));
+  };
+
+  const handleDeleteAlert = async (id) => {
+    // Remove from local state immediately
+    setAlerts((prev) => prev.filter((a) => a.id !== id));
+
+    // Delete via alertService (syncs to localStorage, backend API, and Supabase)
+    await alertService.deleteAlert(id);
+    window.dispatchEvent(new Event("sentinel-alerts-updated"));
   };
 
   const filteredAlerts = alerts.filter((item) => {
@@ -242,6 +252,18 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
                       Dismiss
                     </button>
                   )}
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteAlert(item.id);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-semibold bg-[#0a0e14] hover:bg-red-500/20 border border-[#1e2a3a] hover:border-red-500/40 text-[#7d8da3] hover:text-red-400 px-3 py-2 rounded-xl transition-all cursor-pointer"
+                    title="Delete alert entry"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete
+                  </button>
                 </div>
               </div>
             );

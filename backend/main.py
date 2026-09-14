@@ -316,6 +316,12 @@ def update_alert(alert_id: str, payload: dict):
     res = supabase_api_request(f"alerts?id=eq.{alert_id}", method="PATCH", data=payload)
     return res or {"status": "ok"}
 
+@app.delete("/api/alerts/{alert_id}")
+def delete_alert(alert_id: str):
+    """Removes an alert record from Supabase."""
+    res = supabase_api_request(f"alerts?id=eq.{alert_id}", method="DELETE")
+    return res or {"status": "deleted"}
+
 @app.get("/api/watchlist")
 def get_watchlist(entity_type: Optional[str] = None):
     """Returns active surveillance targets from watchlist."""

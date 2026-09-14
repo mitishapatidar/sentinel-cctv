@@ -48,7 +48,47 @@ export const alertService = {
       alerts = alerts.map((a) => (overrides[a.id] ? { ...a, status: overrides[a.id] } : a));
     } catch (e) {}
 
+    // Filter out locally or remotely deleted alerts
+    try {
+      const deleted = JSON.parse(localStorage.getItem("sentinel_deleted_alerts") || "[]");
+      if (Array.isArray(deleted) && deleted.length > 0) {
+        const delSet = new Set(deleted);
+        alerts = alerts.filter((a) => !delSet.has(a.id));
+      }
+    } catch (e) {}
+
     return { data: alerts, error: null };
+  },
+
+  /**
+   * Deletes an alert and updates sync caches.
+   */
+  async deleteAlert(alertId) {
+    // 1. LocalStorage persistence
+    try {
+      const deleted = JSON.parse(localStorage.getItem("sentinel_deleted_alerts") || "[]");
+      if (!deleted.includes(alertId)) {
+        deleted.push(alertId);
+        localStorage.setItem("sentinel_deleted_alerts", JSON.stringify(deleted));
+      }
+      const overrides = JSON.parse(localStorage.getItem("sentinel_alert_status_overrides") || "{}");
+      delete overrides[alertId];
+      localStorage.setItem("sentinel_alert_status_overrides", JSON.stringify(overrides));
+    } catch (e) {}
+
+    // 2. Sync to Backend API
+    try {
+      await fetch(`${BACKEND_URL}/api/alerts/${alertId}`, {
+        method: "DELETE",
+      });
+    } catch (e) {}
+
+    // 3. Sync to Supabase
+    try {
+      await supabase.from("alerts").delete().eq("id", alertId);
+    } catch (e) {}
+
+    return { success: true };
   },
 
   /**
