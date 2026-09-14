@@ -20,7 +20,10 @@ export default function CameraGridPage() {
     if (isLocal) {
       return `http://127.0.0.1:8000/api/cameras/${camId}/snapshot?t=${timestamp}`;
     }
-    return `/snapshots/${camId}.jpg`;
+    const now = new Date();
+    const istHour = (now.getUTCHours() + 5.5) % 24;
+    const isDaytime = istHour >= 6 && istHour < 18;
+    return isDaytime ? `/snapshots/day_${camId}.jpg` : `/snapshots/${camId}.jpg`;
   };
 
   // Auto-refresh snapshot images every 3 minutes (180 seconds)
@@ -199,11 +202,15 @@ export default function CameraGridPage() {
                         alt={cam.name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
+                          const now = new Date();
+                          const istHour = (now.getUTCHours() + 5.5) % 24;
+                          const isDaytime = istHour >= 6 && istHour < 18;
+                          const dayPrefix = isDaytime ? "day_" : "";
                           if (!e.target.dataset.triedFallback) {
                             e.target.dataset.triedFallback = "true";
-                            e.target.src = `/snapshots/${cam.id}.jpg`;
+                            e.target.src = `/snapshots/${dayPrefix}${cam.id}.jpg`;
                           } else {
-                            e.target.src = "/snapshots/cam01.jpg";
+                            e.target.src = isDaytime ? "/snapshots/day_cam01.jpg" : "/snapshots/cam01.jpg";
                           }
                         }}
                       />

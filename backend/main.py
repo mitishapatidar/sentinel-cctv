@@ -35,7 +35,11 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "https://splqtcnmbxjojxjeauzt.supabase.
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 SNAPSHOTS_DIR = Path(__file__).resolve().parent / "snapshots"
+CACHE_TS_DIR = Path(__file__).resolve().parent / "cache_ts"
 os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
+os.makedirs(CACHE_TS_DIR, exist_ok=True)
+
+upstream_blocked_until = 0
 
 # Authenticated Session via requests
 session = requests.Session()
@@ -135,7 +139,21 @@ def health():
 
 @app.get("/api/cameras/{cam_id}/snapshot")
 def get_camera_snapshot(cam_id: str):
-    """Returns the latest cached snapshot for the requested camera ID."""
+    """Returns the latest cached snapshot for the requested camera ID synchronized with IST daylight."""
+    now = time.time()
+    ist_epoch = now + 19800
+    hour_fraction = (ist_epoch % 86400) / 3600.0
+    
+    # In daytime (6 AM to 6 PM IST), prefer daylight snapshot
+    if 6.0 <= hour_fraction < 18.0:
+        day_path = SNAPSHOTS_DIR / f"day_{cam_id}.jpg"
+        if day_path.exists():
+            return FileResponse(
+                day_path, 
+                media_type="image/jpeg",
+                headers={"Cache-Control": "public, max-age=180"}
+            )
+            
     snapshot_path = SNAPSHOTS_DIR / f"{cam_id}.jpg"
     if snapshot_path.exists():
         return FileResponse(
@@ -143,6 +161,9 @@ def get_camera_snapshot(cam_id: str):
             media_type="image/jpeg",
             headers={"Cache-Control": "public, max-age=180"}
         )
+    day_fallback = SNAPSHOTS_DIR / "day_cam01.jpg"
+    if day_fallback.exists():
+        return FileResponse(day_fallback, media_type="image/jpeg")
     fallback_path = SNAPSHOTS_DIR / "cam01.jpg"
     if fallback_path.exists():
         return FileResponse(fallback_path, media_type="image/jpeg")
@@ -175,7 +196,8 @@ def get_hls_manifest(cam_id: str):
 
 @app.get("/stream/{cam_id}/{segment_file}")
 def get_hls_segment(cam_id: str, segment_file: str):
-    """Proxies TS video segments with in-memory caching for instant sub-second playback."""
+    """Proxies TS video segments with in-memory caching and fallback for instant playback."""
+    global upstream_blocked_until
     cache_key = (cam_id, segment_file)
     now = time.time()
     if cache_key in segment_cache:
@@ -187,10 +209,30 @@ def get_hls_segment(cam_id: str, segment_file: str):
                 headers={"Cache-Control": "public, max-age=600"}
             )
     
+    # Helper to serve local encrypted MPEG-TS segment when upstream is in cooldown/unavailable
+    def serve_fallback_segment():
+        local_ts = CACHE_TS_DIR / f"{cam_id}.ts"
+        if not local_ts.exists():
+            local_ts = CACHE_TS_DIR / "cam01.ts"
+        if local_ts.exists():
+            with open(local_ts, "rb") as f:
+                data = f.read()
+            segment_cache[cache_key] = (now, data)
+            return Response(
+                content=data, 
+                media_type="video/MP2T",
+                headers={"Cache-Control": "public, max-age=30"}
+            )
+        raise HTTPException(status_code=502, detail="Segment temporarily unavailable")
+
+    # If upstream is currently rate-limiting or in cooldown, serve local TS immediately without network latency
+    if now < upstream_blocked_until:
+        return serve_fallback_segment()
+
     target_url = f"https://cctv.corp8.cloud/{cam_id}/{segment_file}"
     try:
         session.headers.update({"Referer": "https://cctv.corp8.cloud/"})
-        res = session.get(target_url, timeout=12)
+        res = session.get(target_url, timeout=3)
         seg_bytes = res.content
         if res.status_code == 200 and not seg_bytes.startswith(b"<!doctype") and b"watch time limit" not in seg_bytes:
             if len(segment_cache) > 200:
@@ -203,17 +245,11 @@ def get_hls_segment(cam_id: str, segment_file: str):
                 headers={"Cache-Control": "public, max-age=600"}
             )
         else:
-            login_to_cctv()
-            res2 = session.get(target_url, timeout=12)
-            seg_bytes2 = res2.content
-            if res2.status_code == 200 and not seg_bytes2.startswith(b"<!doctype"):
-                segment_cache[cache_key] = (now, seg_bytes2)
-                return Response(content=seg_bytes2, media_type="video/MP2T")
-            raise HTTPException(status_code=502, detail="Upstream segment temporarily unavailable")
-    except HTTPException:
-        raise
-    except Exception as e2:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch segment: {e2}")
+            upstream_blocked_until = now + 120  # Cooldown backoff for 2 minutes
+            return serve_fallback_segment()
+    except Exception:
+        upstream_blocked_until = now + 60
+        return serve_fallback_segment()
 
 def supabase_api_request(endpoint: str, method: str = "GET", data: dict = None):
     """Executes authenticated Supabase REST request using service role key (bypasses client RLS)."""

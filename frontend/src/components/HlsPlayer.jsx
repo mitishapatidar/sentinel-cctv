@@ -110,7 +110,13 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId, hoverStartT
   }, [streamUrl, cameraId]);
 
   const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-  const fallbackSnapshot = isLocal ? `http://127.0.0.1:8000/api/cameras/${cameraId}/snapshot` : `/snapshots/${cameraId}.jpg`;
+  const now = new Date();
+  const istHour = (now.getUTCHours() + 5.5) % 24;
+  const isDaytime = istHour >= 6 && istHour < 18;
+  const dayPrefix = isDaytime ? "day_" : "";
+  const fallbackSnapshot = isLocal 
+    ? `http://127.0.0.1:8000/api/cameras/${cameraId}/snapshot` 
+    : `/snapshots/${dayPrefix}${cameraId}.jpg`;
 
   return (
     <div className="relative w-full h-full bg-[#0a0e14] overflow-hidden flex items-center justify-center group">
@@ -122,9 +128,9 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId, hoverStartT
         onError={(e) => {
           if (!e.target.dataset.triedFallback) {
             e.target.dataset.triedFallback = "true";
-            e.target.src = `/snapshots/${cameraId}.jpg`;
+            e.target.src = `/snapshots/${dayPrefix}${cameraId}.jpg`;
           } else {
-            e.target.src = "/snapshots/cam01.jpg";
+            e.target.src = isDaytime ? "/snapshots/day_cam01.jpg" : "/snapshots/cam01.jpg";
           }
         }}
       />
