@@ -1,20 +1,37 @@
-﻿import React from "react";
+import React from "react";
 import { Shield, Eye, Database, Radio, CheckCircle, AlertTriangle, ArrowRight, Lock, MapPin, Phone, Mail, FileText } from "lucide-react";
 
 export default function LandingPage({ onEnterLogin }) {
   return (
     <div className="min-h-screen bg-[#0a0e14] text-[#e6edf5] flex flex-col">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 border-b border-[#1e2a3a] bg-[#111823]/90 backdrop-blur px-6 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-40 border-b border-[#1e2a3a] bg-[#111823]/95 backdrop-blur px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400">
-            <Shield className="h-6 w-6" />
+          {/* Gujarat Police Emblem Badge with Satyameva Jayate */}
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-b from-blue-900/60 to-blue-950/90 border border-blue-500/40 flex flex-col items-center justify-center text-blue-400 shrink-0 shadow-md shadow-blue-950/60">
+            <Shield className="h-5 w-5 text-amber-400 fill-amber-400/20" />
+            <span className="text-[7px] font-semibold text-amber-300/90 tracking-tighter leading-none mt-0.5">
+              સત્યમેવ જયતે
+            </span>
           </div>
+
           <div>
-            <div className="font-bold tracking-wider text-base flex items-center gap-2">
-              SENTINEL <span className="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">GPIC 2026</span>
+            {/* Top Line: Gujarati & English Police Department */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-blue-400 tracking-wide">
+                ગુજરાત પોલીસ • GUJARAT POLICE
+              </span>
             </div>
-            <p className="text-[11px] text-[#7d8da3]">Gujarat Police Innovation Challenge • Unified CCTV Platform</p>
+
+            {/* Main Title */}
+            <h1 className="text-sm sm:text-base font-extrabold text-white tracking-tight leading-snug">
+              SENTINEL <span className="text-white/60 font-normal">—</span> Unified CCTV &amp; AI ANPR Command Grid
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-[10px] sm:text-[11px] text-[#7d8da3] tracking-wide leading-none mt-0.5 hidden sm:block">
+              Connecting 80,000 Heterogeneous Cameras across Municipal Corporations, Smart Cities, RTOs &amp; Police
+            </p>
           </div>
         </div>
 

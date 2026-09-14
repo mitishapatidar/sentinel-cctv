@@ -59,11 +59,21 @@ export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHo
           </div>
 
           <div>
-            <h1 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-blue-400">
-              GOVERNMENT OF GUJARAT • HOME DEPARTMENT
+            {/* Top Line: Gujarati & English Police Department */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-blue-400 tracking-wide">
+                ગુજરાત પોલીસ • GUJARAT POLICE
+              </span>
+            </div>
+
+            {/* Main Title */}
+            <h1 className="text-sm sm:text-base font-extrabold text-white tracking-tight leading-snug">
+              SENTINEL <span className="text-white/60 font-normal">—</span> Unified CCTV &amp; AI ANPR Command Grid
             </h1>
-            <p className="text-[11px] text-[#7d8da3] tracking-wide font-medium">
-              Gujarat State Unified CCTV Grid ("SENTINEL")
+
+            {/* Subtitle */}
+            <p className="text-[10px] sm:text-[11px] text-[#7d8da3] tracking-wide leading-none mt-0.5 hidden sm:block">
+              Connecting 80,000 Heterogeneous Cameras across Municipal Corporations, Smart Cities, RTOs &amp; Police
             </p>
           </div>
         </div>
