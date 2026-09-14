@@ -15,9 +15,12 @@ import {
   FileText, 
   Lock, 
   Award,
-  Key
+  Key,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
 import { isAudioMuted, setAudioMuted } from "../utils/audioAlert";
 
 export default function Navbar({ 
@@ -32,6 +35,7 @@ export default function Navbar({
   alertCount = 0 
 }) {
   const { language, setLanguage, t } = useLanguage();
+  const { theme, setTheme } = useTheme();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langMenuRef = useRef(null);
 
@@ -305,6 +309,42 @@ export default function Navbar({
                   >
                     <span>Operator</span>
                     {user?.roleKey === "operator" && <Check className="h-3 w-3" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Display Theme Switcher (White Mode / Dark Grid) */}
+              <div className="p-3 border-b border-[#1e2a3a]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#5c6b86] mb-1.5 flex items-center justify-between">
+                  <span>Display Theme</span>
+                  <span className="text-[9px] font-mono font-bold text-blue-500 uppercase">
+                    {theme === "light" ? "White Theme Active" : "Dark Theme Active"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setTheme("light")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                      theme === "light"
+                        ? "bg-amber-500/20 text-amber-600 border-amber-500/50 shadow-sm font-bold"
+                        : "bg-[#0a0e14] text-[#7d8da3] border-[#1e2a3a] hover:text-white hover:bg-[#162130]"
+                    }`}
+                  >
+                    <Sun className="h-3.5 w-3.5 text-amber-500" />
+                    <span>White Mode</span>
+                    {theme === "light" && <Check className="h-3 w-3 text-amber-600" />}
+                  </button>
+                  <button
+                    onClick={() => setTheme("dark")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                      theme === "dark"
+                        ? "bg-blue-600 text-white border-blue-500 shadow-sm font-bold"
+                        : "bg-[#0a0e14] text-[#7d8da3] border-[#1e2a3a] hover:text-white hover:bg-[#162130]"
+                    }`}
+                  >
+                    <Moon className="h-3.5 w-3.5 text-blue-400" />
+                    <span>Dark Grid</span>
+                    {theme === "dark" && <Check className="h-3 w-3" />}
                   </button>
                 </div>
               </div>
