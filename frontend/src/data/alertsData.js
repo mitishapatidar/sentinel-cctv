@@ -1,6 +1,23 @@
 // Gujarat Police SENTINEL - Real-Time Law Enforcement Alerts Data
 export const INITIAL_ALERTS = [
   {
+    "id": "b07f3136-6209-4bbc-a0e5-38e368f1ec66",
+    "alert_code": "ALT-9022",
+    "alert_type": "Amber Alert",
+    "severity": "critical",
+    "camera_id": "cam04",
+    "detection_id": null,
+    "watchlist_id": "01b5a12f-d031-4c38-afbe-a0c3eba5b797",
+    "title": "KIDNAPPING Amber Alert: GJ-05-CD-5678",
+    "message": "Identified at 04 Paldi Circle. Confidence 99.1%. Emergency PCR intercept deployed to isolate intersection.",
+    "status": "pending",
+    "created_at": "2026-09-14T17:58:00+00:00",
+    "cameras": {
+      "city": "Ahmedabad",
+      "name": "04 Paldi Circle"
+    }
+  },
+  {
     "id": "bb0501e1-60de-417f-aad9-3c48ecf71ab0",
     "alert_code": "ALT-9030",
     "alert_type": "Serial Chain Snatcher",
@@ -134,23 +151,6 @@ export const INITIAL_ALERTS = [
     "cameras": {
       "city": "Ahmedabad",
       "name": "01 Chiman bhai Bridge"
-    }
-  },
-  {
-    "id": "b07f3136-6209-4bbc-a0e5-38e368f1ec66",
-    "alert_code": "ALT-9022",
-    "alert_type": "Amber Alert",
-    "severity": "critical",
-    "camera_id": "cam04",
-    "detection_id": null,
-    "watchlist_id": "01b5a12f-d031-4c38-afbe-a0c3eba5b797",
-    "title": "KIDNAPPING Amber Alert: GJ-05-CD-5678",
-    "message": "Identified at 04 Paldi Circle. Confidence 99.1%. Emergency PCR intercept deployed to isolate intersection.",
-    "status": "pending",
-    "created_at": "2026-09-13T19:21:49.2144+00:00",
-    "cameras": {
-      "city": "Ahmedabad",
-      "name": "04 Paldi Circle"
     }
   },
   {
