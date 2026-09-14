@@ -8,7 +8,7 @@ export default function CameraGridPage() {
   const [cameras, setCameras] = useState(INITIAL_CAMERAS);
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState("all");
-  const [viewMode, setViewMode] = useState("hover"); // "hover" | "all"
+  const [viewMode, setViewMode] = useState("all"); // "all" | "hover"
   const [hoveredCamId, setHoveredCamId] = useState(null);
   const [snapshotTimestamp, setSnapshotTimestamp] = useState(Date.now());
   const [activeCamModal, setActiveCamModal] = useState(null);
@@ -94,8 +94,8 @@ export default function CameraGridPage() {
           <h1 className="text-xl font-bold text-white tracking-wide">Multi-Camera Live Video Grid</h1>
           <p className="text-xs text-[#7d8da3] mt-0.5">
             Model 2: Unified Video Viewing Gateway •{" "}
-            <span className="text-blue-400 font-medium">
-              {viewMode === "hover" ? "Hover-to-Play Active (3m auto-refresh)" : "All 30 Feeds Live Streaming"}
+            <span className={viewMode === "all" ? "text-emerald-400 font-medium" : "text-blue-400 font-medium"}>
+              {viewMode === "all" ? "All 30 Feeds Live Streaming" : "Hover-to-Play Active"}
             </span>
           </p>
         </div>
@@ -125,9 +125,9 @@ export default function CameraGridPage() {
             ))}
           </select>
 
-          {/* Mode Dropdown: Hover to play vs All live */}
+          {/* Mode Dropdown: All live vs Hover to play */}
           <div className="flex items-center gap-1.5 bg-[#0a0e14] border border-[#1e2a3a] rounded-xl px-2.5 py-1">
-            <Tv className="h-3.5 w-3.5 text-blue-400" />
+            <Tv className="h-3.5 w-3.5 text-emerald-400" />
             <select
               value={viewMode}
               onChange={(e) => {
@@ -137,11 +137,11 @@ export default function CameraGridPage() {
               className="bg-transparent text-xs text-white focus:outline-none cursor-pointer font-medium pr-1"
               title="Select Grid Streaming Mode"
             >
-              <option value="hover" className="bg-[#111823] text-white">
-                Hover to play (Default)
-              </option>
               <option value="all" className="bg-[#111823] text-white">
-                All live (30 concurrent)
+                All live feeds (Default)
+              </option>
+              <option value="hover" className="bg-[#111823] text-white">
+                Hover to play
               </option>
             </select>
           </div>
