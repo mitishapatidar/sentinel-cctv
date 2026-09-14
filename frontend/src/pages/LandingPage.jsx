@@ -1,5 +1,43 @@
 import React from "react";
-import { Shield, Eye, Database, Radio, CheckCircle, AlertTriangle, ArrowRight, Lock, MapPin, Phone, Mail, FileText } from "lucide-react";
+import { Shield, Eye, Database, Radio, CheckCircle, AlertTriangle, ArrowRight, Lock, MapPin, Phone, Mail, FileText, Car, Building2, Landmark, Anchor } from "lucide-react";
+
+const DEPARTMENTS = [
+  {
+    title: "Gujarat Police (City & Highway Surveillance)",
+    nodes: "28,400 Nodes",
+    desc: "Integrated city surveillance mesh, 24x7 ANPR hotlist scanners, traffic junction PTZ cameras, and PCR van dispatch link across 33 districts.",
+    coverage: "Ahmedabad, Gandhinagar, Surat, Vadodara, Rajkot",
+    icon: Shield,
+  },
+  {
+    title: "Traffic & RTO (Speed & ANPR Corridors)",
+    nodes: "19,200 Nodes",
+    desc: "National & State Highway automated speed violation detection, FASTag integration, electronic toll nakas, and overload freight enforcement.",
+    coverage: "NE-1 Expressway, NH-48, SG Highway, Ring Roads",
+    icon: Car,
+  },
+  {
+    title: "Civil Supplies & Warehousing (PDS Depot Security)",
+    nodes: "12,100 Nodes",
+    desc: "Food grain warehouses, essential supplies distribution depots, anti-diversion vigilance, and state-backed transport trucks tracking.",
+    coverage: "PDS Supply Depots, State Freight Terminals",
+    icon: Building2,
+  },
+  {
+    title: "Smart Cities / Municipal Corporations (AMC, SMC, VMC)",
+    nodes: "14,300 Nodes",
+    desc: "Unified municipal corporation surveillance, public transport BRTS/Metro corridors, waste management centers, and civic hubs.",
+    coverage: "Ahmedabad (AMC), Surat (SMC), Vadodara (VMC)",
+    icon: Landmark,
+  },
+  {
+    title: "Border & Coastal Security (Kutch, Jamnagar, Dwarka)",
+    nodes: "6,000 Nodes",
+    desc: "Marine police checkpoints, coastal highway checkpoints, international border security gates, and port peripheral surveillance.",
+    coverage: "Rann of Kutch, Okha, Kandla, Mundra Coastal Belt",
+    icon: Anchor,
+  },
+];
 
 export default function LandingPage({ onEnterLogin }) {
   return (
@@ -110,6 +148,52 @@ export default function LandingPage({ onEnterLogin }) {
         </div>
       </section>
 
+      {/* Inter-Departmental Node Breakdown (5 Statewide Pillars) */}
+      <section className="py-14 px-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {DEPARTMENTS.map((dept, idx) => {
+            const IconComponent = dept.icon;
+            return (
+              <div
+                key={idx}
+                className="p-6 rounded-2xl bg-[#111823] border border-[#1e2a3a] hover:border-blue-500/40 transition-all flex flex-col justify-between shadow-sm"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      <IconComponent className="h-5 w-5" />
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Active
+                    </span>
+                  </div>
+
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mt-4 leading-snug">
+                    {dept.title}
+                  </h3>
+                  <p className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400 font-mono mt-1 mb-3">
+                    {dept.nodes}
+                  </p>
+                  <p className="text-xs text-[#7d8da3] leading-relaxed mb-6">
+                    {dept.desc}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-[#1e2a3a]">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#5c6b86]">
+                    Key Coverage:
+                  </p>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-[#cad5e2] mt-0.5">
+                    {dept.coverage}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Core Capabilities */}
       <section id="architecture" className="py-20 px-6 max-w-6xl mx-auto">
         <div className="text-center mb-16">
@@ -152,49 +236,20 @@ export default function LandingPage({ onEnterLogin }) {
         </div>
       </section>
 
-      {/* Security & Compliance Highlight */}
-      <section className="py-16 px-6 bg-[#111823]/40 border-t border-[#1e2a3a]">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10">
-          <div className="flex-1">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full mb-4">
-              <Shield className="h-3.5 w-3.5" />
-              Law-Enforcement Grade Security
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Built for Strict Chain of Custody & DPDP Compliance
-            </h2>
-            <div className="space-y-3 text-xs text-[#7d8da3]">
-              <div className="flex items-start gap-2.5">
-                <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong className="text-white">Audit Logging:</strong> Every feed access, playback, search, and alert acknowledgement recorded in tamper-evident logs for judicial admissibility.</span>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong className="text-white">Role-Based Access Control (RBAC):</strong> Granular departmental isolation ensuring officers only inspect authorized surveillance sectors.</span>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong className="text-white">DPDP Act 2023 Architecture:</strong> Automated data masking and tiered hot/cold retention policies protecting civil liberties.</span>
-              </div>
-            </div>
+      {/* Contact & Command Center */}
+      <section className="py-8 px-6 bg-[#111823]/40 border-t border-[#1e2a3a]">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-6 text-xs">
+          <div className="flex items-center gap-3 text-white">
+            <MapPin className="h-4 w-4 text-blue-400 shrink-0" />
+            <span>SCRB, Police Bhawan, Sector-18, Gandhinagar</span>
           </div>
-
-          <div className="w-full md:w-80 p-6 rounded-2xl bg-[#0a0e14] border border-[#1e2a3a]">
-            <p className="text-xs uppercase tracking-wider text-[#7d8da3] mb-4 font-semibold">Contact & Command Center</p>
-            <div className="space-y-4 text-xs">
-              <div className="flex items-center gap-3 text-white">
-                <MapPin className="h-4 w-4 text-blue-400" />
-                <span>SCRB, Police Bhawan, Sector-18, Gandhinagar</span>
-              </div>
-              <div className="flex items-center gap-3 text-white">
-                <Phone className="h-4 w-4 text-blue-400" />
-                <span>+91 95370 89982</span>
-              </div>
-              <div className="flex items-center gap-3 text-white">
-                <Mail className="h-4 w-4 text-blue-400" />
-                <span>sentinel.command@gujarat.gov.in</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-3 text-white">
+            <Phone className="h-4 w-4 text-blue-400 shrink-0" />
+            <span>+91 95370 89982</span>
+          </div>
+          <div className="flex items-center gap-3 text-white">
+            <Mail className="h-4 w-4 text-blue-400 shrink-0" />
+            <span>sentinel.command@gujarat.gov.in</span>
           </div>
         </div>
       </section>

@@ -390,7 +390,7 @@ export default function Navbar({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setShowLogoutConfirm(false)}
-                        className="flex-1 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-300 transition-all cursor-pointer"
+                        className="logout-cancel-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm text-center"
                       >
                         Cancel
                       </button>

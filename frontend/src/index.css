@@ -386,3 +386,26 @@ html.dark .officer-dropdown-menu {
   border: 1.5px solid #334155 !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
 }
+
+/* Logout Confirmation Cancel Button */
+html:not(.dark) .logout-cancel-btn {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html:not(.dark) .logout-cancel-btn:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+html.dark .logout-cancel-btn {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+  border: 1px solid #374151 !important;
+}
+
+html.dark .logout-cancel-btn:hover {
+  background-color: #374151 !important;
+}
+
