@@ -252,82 +252,85 @@ export default function DashboardPage({ setActivePage }) {
           <div className="grid grid-cols-2 gap-2 shrink-0">
             <div className="p-3 rounded-xl bg-[#111823] border border-[#1e2a3a]">
               <div className="flex items-center justify-between text-[#7d8da3] mb-1">
-                <span className="text-[10px] uppercase tracking-wider font-semibold">{t("totalCameras")}</span>
+                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">{t("totalCameras")}</span>
                 <Radio className="h-3.5 w-3.5 text-blue-400" />
               </div>
               <p className="text-xl font-extrabold font-mono text-white leading-tight">{stats.total}</p>
-              <p className="text-[9px] text-[#7d8da3] mt-0.5">{t("govtOnboarded")}</p>
+              <p className="text-[10px] text-[#7d8da3] mt-0.5">{t("govtOnboarded")}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#111823] border border-emerald-500/30 bg-emerald-500/5">
               <div className="flex items-center justify-between text-[#7d8da3] mb-1">
-                <span className="text-[10px] uppercase tracking-wider font-semibold">{t("liveFeedsCount")}</span>
+                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">{t("liveFeedsCount")}</span>
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
               </div>
               <p className="text-xl font-extrabold font-mono text-emerald-400 leading-tight">{stats.live}</p>
-              <p className="text-[9px] text-[#7d8da3] mt-0.5">{t("relayOperational")}</p>
+              <p className="text-[10px] text-[#7d8da3] mt-0.5">{t("relayOperational")}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#111823] border border-amber-500/30 bg-amber-500/5">
               <div className="flex items-center justify-between text-[#7d8da3] mb-1">
-                <span className="text-[10px] uppercase tracking-wider font-semibold">{t("alertsToday")}</span>
+                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">{t("alertsToday")}</span>
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
               </div>
               <p className="text-xl font-extrabold font-mono text-amber-400 leading-tight">{stats.alertsToday}</p>
-              <p className="text-[9px] text-[#7d8da3] mt-0.5">{t("watchlistMatches")}</p>
+              <p className="text-[10px] text-[#7d8da3] mt-0.5">{t("watchlistMatches")}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#111823] border border-[#1e2a3a]">
               <div className="flex items-center justify-between text-[#7d8da3] mb-1">
-                <span className="text-[10px] uppercase tracking-wider font-semibold">{t("trackedPlates")}</span>
+                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">{t("trackedPlates")}</span>
                 <Car className="h-3.5 w-3.5 text-blue-400" />
               </div>
               <p className="text-xl font-extrabold font-mono text-white leading-tight">{stats.vehiclesTracked}</p>
-              <p className="text-[9px] text-[#7d8da3] mt-0.5">{t("anprProcessed")}</p>
+              <p className="text-[10px] text-[#7d8da3] mt-0.5">{t("anprProcessed")}</p>
             </div>
           </div>
 
           {/* Department Coverage Widget */}
-          <div className="p-3 rounded-2xl bg-[#111823] border border-[#1e2a3a] flex-1 flex flex-col justify-center min-h-0">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-white mb-2">{t("deptDeployment")}</h3>
-            <div className="space-y-1.5 text-xs">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#111823] border border-[#1e2a3a] flex-1 flex flex-col justify-between min-h-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-2">
+              {t("deptDeployment")}
+            </h3>
+
+            <div className="space-y-2.5 my-auto">
               <div>
-                <div className="flex justify-between text-[#7d8da3] mb-0.5 text-[10px]">
-                  <span>{t("cityPolice")}</span>
-                  <span className="font-mono text-white">12 Feeds</span>
+                <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
+                  <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{t("cityPolice")}</span>
+                  <span className="font-mono font-bold text-white shrink-0">12 Feeds</span>
                 </div>
-                <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 w-[40%] rounded-full"></div>
+                <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-600 rounded-full transition-all duration-500 w-[40%]"></div>
                 </div>
               </div>
 
               <div>
-                <div className="flex justify-between text-[#7d8da3] mb-0.5 text-[10px]">
-                  <span>{t("trafficPolice")}</span>
-                  <span className="font-mono text-white">10 Feeds</span>
+                <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
+                  <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{t("trafficPolice")}</span>
+                  <span className="font-mono font-bold text-white shrink-0">10 Feeds</span>
                 </div>
-                <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500/80 w-[33%] rounded-full"></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[#7d8da3] mb-0.5 text-[10px]">
-                  <span>{t("highwayPatrol")}</span>
-                  <span className="font-mono text-white">5 Feeds</span>
-                </div>
-                <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500/60 w-[17%] rounded-full"></div>
+                <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-500 rounded-full transition-all duration-500 w-[33%]"></div>
                 </div>
               </div>
 
               <div>
-                <div className="flex justify-between text-[#7d8da3] mb-0.5 text-[10px]">
-                  <span>{t("coastalGram")}</span>
-                  <span className="font-mono text-white">3 Feeds</span>
+                <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
+                  <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{t("highwayPatrol")}</span>
+                  <span className="font-mono font-bold text-white shrink-0">5 Feeds</span>
                 </div>
-                <div className="h-1.5 w-full bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500/40 w-[10%] rounded-full"></div>
+                <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-400 rounded-full transition-all duration-500 w-[17%]"></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
+                  <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{t("coastalGram")}</span>
+                  <span className="font-mono font-bold text-white shrink-0">3 Feeds</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-300 rounded-full transition-all duration-500 w-[10%]"></div>
                 </div>
               </div>
             </div>
