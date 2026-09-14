@@ -10,7 +10,7 @@ export const INITIAL_ALERTS = [
     "watchlist_id": "59a2e5ec-49d8-4aab-ba3e-d886a7e20712",
     "title": "WANTED Two-Wheeler: GJ-23-VW-5432",
     "message": "Identified at 04 Paldi Circle. Confidence 98.0%. Matches 3 snatching incidents in Navrangpura.",
-    "status": "pending",
+    "status": "acknowledged",
     "created_at": "2026-09-13T19:21:49.767317+00:00",
     "cameras": {
       "city": "Ahmedabad",
@@ -27,7 +27,7 @@ export const INITIAL_ALERTS = [
     "watchlist_id": "5c91d1ce-c945-4f22-8c46-074fed4692c1",
     "title": "POLICE BLOCKADE EVADER: GJ-08-TU-1098",
     "message": "Identified at 12 Tri Mandir Adalaj Tollnaka. Heavy commercial vehicle bypassing inspection lane.",
-    "status": "pending",
+    "status": "resolved",
     "created_at": "2026-09-13T19:21:49.698181+00:00",
     "cameras": {
       "city": "Gandhinagar",
@@ -61,7 +61,7 @@ export const INITIAL_ALERTS = [
     "watchlist_id": "d1b29161-0478-4349-b8dc-e18907f31348",
     "title": "ARMED SUSPECT ESCAPE: GJ-15-PQ-2109",
     "message": "Identified at 15 Vadodara Checkpoint. Confidence 98.0%. Spike strip barrier alert issued.",
-    "status": "pending",
+    "status": "resolved",
     "created_at": "2026-09-13T19:21:49.569425+00:00",
     "cameras": {
       "city": "Ahmedabad",
