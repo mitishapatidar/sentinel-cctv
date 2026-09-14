@@ -241,15 +241,15 @@ export default function LandingPage({ onEnterLogin }) {
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-6 text-xs">
           <div className="flex items-center gap-3 text-white">
             <MapPin className="h-4 w-4 text-blue-400 shrink-0" />
-            <span>SCRB, Police Bhawan, Sector-18, Gandhinagar</span>
+            <span>State CCTV Surveillance Hub, Sector-18, Gandhinagar</span>
           </div>
           <div className="flex items-center gap-3 text-white">
             <Phone className="h-4 w-4 text-blue-400 shrink-0" />
-            <span>+91 95370 89982</span>
+            <span>+91 79 2325 0000 / 1800-000-0000</span>
           </div>
           <div className="flex items-center gap-3 text-white">
             <Mail className="h-4 w-4 text-blue-400 shrink-0" />
-            <span>sentinel.command@gujarat.gov.in</span>
+            <span>controlroom.demo@sentinel-cctv.in</span>
           </div>
         </div>
       </section>
