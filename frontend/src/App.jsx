@@ -31,6 +31,8 @@ export default function App() {
     email: "sentialcctv@gmail.com",
     role: "Dy. Commissioner (Admin)",
     roleKey: "admin",
+    badgeId: "GP-CID-7809",
+    department: "CID Crime Branch (State Grid)",
   });
 
   const [trackingPlate, setTrackingPlate] = useState(() => {
@@ -179,6 +181,7 @@ export default function App() {
         activePage={activePage}
         setActivePage={setActivePage}
         user={user}
+        onUserChange={setUser}
         onLogout={handleLogout}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={toggleSidebar}

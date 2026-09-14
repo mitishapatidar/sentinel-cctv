@@ -1,5 +1,22 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Shield, Bell, Radio, LogOut, User, Menu, Globe, ChevronDown, Check, Volume2, VolumeX } from "lucide-react";
+import { 
+  Shield, 
+  Bell, 
+  Radio, 
+  LogOut, 
+  User, 
+  Menu, 
+  Globe, 
+  ChevronDown, 
+  Check, 
+  Volume2, 
+  VolumeX, 
+  ShieldAlert, 
+  FileText, 
+  Lock, 
+  Award,
+  Key
+} from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { isAudioMuted, setAudioMuted } from "../utils/audioAlert";
 
@@ -7,6 +24,7 @@ export default function Navbar({
   activePage, 
   setActivePage, 
   user, 
+  onUserChange,
   onLogout, 
   sidebarOpen, 
   onToggleSidebar, 
@@ -16,6 +34,10 @@ export default function Navbar({
   const { language, setLanguage, t } = useLanguage();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langMenuRef = useRef(null);
+
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const [audioMuted, setAudioMutedState] = useState(() => isAudioMuted());
 
@@ -33,11 +55,25 @@ export default function Navbar({
     setAudioMuted(next);
   };
 
-  // Close dropdown on outside click
+  const handleSwitchRole = (roleKey) => {
+    if (onUserChange) {
+      onUserChange((prev) => ({
+        ...prev,
+        roleKey,
+        role: roleKey === "admin" ? "Dy. Commissioner (Admin)" : "Traffic In-Charge (Operator)",
+      }));
+    }
+  };
+
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (langMenuRef.current && !langMenuRef.current.contains(e.target)) {
         setLangDropdownOpen(false);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setProfileDropdownOpen(false);
+        setShowLogoutConfirm(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -156,25 +192,193 @@ export default function Navbar({
           )}
         </button>
 
-        {/* User profile */}
-        <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10">
-          <div className="h-6 w-6 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-xs font-bold font-mono">
-            {user?.roleKey === "admin" ? "DC" : "OP"}
-          </div>
-          <div className="hidden md:block text-left leading-tight">
-            <p className="text-xs font-semibold text-white">{user?.email || t("officer")}</p>
-            <p className="text-[10px] text-blue-400">{user?.role || t("adminRole")}</p>
-          </div>
-        </div>
+        {/* Unified Officer Command Profile & Logout Dropdown */}
+        <div className="relative" ref={profileMenuRef}>
+          <button
+            onClick={() => {
+              setProfileDropdownOpen(!profileDropdownOpen);
+              setShowLogoutConfirm(false);
+            }}
+            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+              profileDropdownOpen
+                ? "border-blue-500 bg-blue-500/20 text-white shadow-lg shadow-blue-500/20"
+                : "border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-white"
+            }`}
+            title="Officer Command Profile & Options"
+          >
+            {/* Avatar with Live Online Status Pulse */}
+            <div className="relative shrink-0">
+              <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xs font-bold font-mono shadow-sm border border-blue-400/40">
+                {user?.roleKey === "admin" ? "DC" : "OP"}
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-[#111823]"></span>
+            </div>
 
-        {/* Sign out */}
-        <button
-          onClick={onLogout}
-          title={t("signOut")}
-          className="p-2 rounded-xl border border-[#1e2a3a] bg-[#0a0e14] text-[#7d8da3] hover:text-red-400 hover:border-red-500/40 transition-all cursor-pointer"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
+            {/* Officer Details */}
+            <div className="hidden md:block text-left leading-tight">
+              <p className="text-xs font-bold text-white tracking-wide truncate max-w-[130px]">
+                {user?.email ? user.email.split("@")[0] : t("officer")}
+              </p>
+              <p className="text-[10px] font-medium text-blue-400 truncate max-w-[130px]">
+                {user?.role || t("adminRole")}
+              </p>
+            </div>
+
+            <ChevronDown
+              className={`h-3.5 w-3.5 text-blue-400 transition-transform duration-200 ${
+                profileDropdownOpen ? "rotate-180 text-blue-300" : ""
+              }`}
+            />
+          </button>
+
+          {/* Officer Command Profile Popover Menu */}
+          {profileDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-88 rounded-2xl bg-[#111823] border border-[#1e2a3a] shadow-2xl shadow-black/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+              {/* Header: Officer ID & Security Badges */}
+              <div className="p-4 border-b border-[#1e2a3a] bg-[#0d131c]">
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-900 border border-blue-400/40 flex items-center justify-center text-white font-bold text-base font-mono shadow-md shrink-0">
+                    {user?.roleKey === "admin" ? "DC" : "OP"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs font-bold text-white truncate">
+                        {user?.roleKey === "admin" ? "Dy. Commissioner of Police" : "Duty Surveillance Officer"}
+                      </h4>
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                    </div>
+                    <p className="text-[11px] text-[#7d8da3] truncate mt-0.5">{user?.email}</p>
+
+                    {/* Badge Number & Clearance Chip */}
+                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400">
+                        <Shield className="h-2.5 w-2.5" />
+                        {user?.badgeId || "GP-CID-7809"}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">
+                        <Award className="h-2.5 w-2.5" />
+                        CLEARANCE LEVEL 4
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Jurisdiction & 2FA Status */}
+                <div className="mt-3 pt-2.5 border-t border-[#1e2a3a] grid grid-cols-2 gap-2 text-[10px] text-[#7d8da3]">
+                  <div>
+                    <span className="block text-[9px] uppercase tracking-wider text-[#5c6b86]">Jurisdiction</span>
+                    <span className="font-semibold text-gray-300 truncate block">Gujarat Police HQ</span>
+                  </div>
+                  <div>
+                    <span className="block text-[9px] uppercase tracking-wider text-[#5c6b86]">Session Security</span>
+                    <span className="font-semibold text-emerald-400 flex items-center gap-1">
+                      <Lock className="h-2.5 w-2.5" /> CCTNS 2FA Active
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Role Switcher */}
+              <div className="p-3 border-b border-[#1e2a3a]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#5c6b86] mb-1.5">
+                  Command Role Switcher
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleSwitchRole("admin")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between border transition-all cursor-pointer ${
+                      user?.roleKey === "admin"
+                        ? "bg-blue-600 text-white border-blue-500 shadow-sm"
+                        : "bg-[#0a0e14] text-[#7d8da3] border-[#1e2a3a] hover:text-white hover:bg-[#162130]"
+                    }`}
+                  >
+                    <span>Admin (DC)</span>
+                    {user?.roleKey === "admin" && <Check className="h-3 w-3" />}
+                  </button>
+                  <button
+                    onClick={() => handleSwitchRole("operator")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between border transition-all cursor-pointer ${
+                      user?.roleKey === "operator"
+                        ? "bg-blue-600 text-white border-blue-500 shadow-sm"
+                        : "bg-[#0a0e14] text-[#7d8da3] border-[#1e2a3a] hover:text-white hover:bg-[#162130]"
+                    }`}
+                  >
+                    <span>Operator</span>
+                    {user?.roleKey === "operator" && <Check className="h-3 w-3" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Navigation Shortcuts */}
+              <div className="p-2 space-y-1">
+                <button
+                  onClick={() => {
+                    setProfileDropdownOpen(false);
+                    setActivePage("audit-logs");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-[#cad5e2] hover:text-white hover:bg-[#162130] transition-all cursor-pointer text-left"
+                >
+                  <ShieldAlert className="h-4 w-4 text-blue-400 shrink-0" />
+                  <div className="flex-1">
+                    <span className="font-semibold block">Security & Audit Logs</span>
+                    <span className="text-[10px] text-[#7d8da3]">Track session and surveillance history</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setProfileDropdownOpen(false);
+                    setActivePage("registry");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-[#cad5e2] hover:text-white hover:bg-[#162130] transition-all cursor-pointer text-left"
+                >
+                  <FileText className="h-4 w-4 text-amber-400 shrink-0" />
+                  <div className="flex-1">
+                    <span className="font-semibold block">Camera Registry & Nodes</span>
+                    <span className="text-[10px] text-[#7d8da3]">Review 30 statewide sensor endpoints</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Secure Sign Out Section with Confirmation */}
+              <div className="p-2.5 border-t border-[#1e2a3a] bg-[#0d131c]">
+                {showLogoutConfirm ? (
+                  <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-xl animate-in fade-in duration-150">
+                    <p className="text-[11px] text-red-300 font-semibold text-center mb-2">
+                      Exit Gujarat Police Command Grid?
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShowLogoutConfirm(false)}
+                        className="flex-1 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-300 transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          setProfileDropdownOpen(false);
+                          setShowLogoutConfirm(false);
+                          onLogout();
+                        }}
+                        className="flex-1 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-bold text-white transition-all cursor-pointer shadow-md shadow-red-600/30"
+                      >
+                        Confirm Sign Out
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowLogoutConfirm(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold text-red-400 hover:text-white hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Sign Out of Command Session</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
