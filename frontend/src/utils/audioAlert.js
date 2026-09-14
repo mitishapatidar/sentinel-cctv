@@ -1,4 +1,21 @@
-﻿export function playAlertChime(severity = "critical") {
+export function isAudioMuted() {
+  try {
+    return localStorage.getItem("sentinel_audio_muted") === "true";
+  } catch (e) {
+    return false;
+  }
+}
+
+export function setAudioMuted(muted) {
+  try {
+    localStorage.setItem("sentinel_audio_muted", muted ? "true" : "false");
+    window.dispatchEvent(new CustomEvent("sentinel-audio-mute-changed", { detail: { muted } }));
+  } catch (e) {}
+}
+
+export function playAlertChime(severity = "critical") {
+  if (isAudioMuted()) return;
+
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;

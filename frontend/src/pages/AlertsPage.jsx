@@ -1,12 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { Bell, AlertTriangle, ShieldAlert, Check, X, Eye, Clock, MapPin, Radio, RefreshCw, Car, Navigation, Trash2 } from "lucide-react";
+import { 
+  Bell, 
+  AlertTriangle, 
+  ShieldAlert, 
+  Check, 
+  X, 
+  Eye, 
+  Clock, 
+  MapPin, 
+  Radio, 
+  RefreshCw, 
+  Car, 
+  Navigation, 
+  Trash2, 
+  Archive, 
+  RotateCcw 
+} from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { alertService } from "../services/alertService";
 import { INITIAL_ALERTS } from "../data/alertsData";
 
 export default function AlertsPage({ setActivePage, onTrackVehicle }) {
   const [alerts, setAlerts] = useState(INITIAL_ALERTS);
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("pending");
   const [loading, setLoading] = useState(false);
 
   const fetchAlerts = async () => {
@@ -81,12 +97,23 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
   };
 
   const filteredAlerts = alerts.filter((item) => {
+    if (filterStatus === "archived") return item.status === "archived";
+    if (item.status === "archived") return false;
     if (filterStatus === "all") return true;
     return item.status === filterStatus;
   });
 
   const pendingCount = alerts.filter((a) => a.status === "pending").length;
-  const criticalCount = alerts.filter((a) => a.severity === "critical").length;
+  const criticalCount = alerts.filter((a) => a.severity === "critical" && a.status !== "archived").length;
+  const archivedCount = alerts.filter((a) => a.status === "archived").length;
+
+  const filterTabs = [
+    { id: "pending", label: "Pending", count: pendingCount },
+    { id: "all", label: "All Active", count: alerts.filter((a) => a.status !== "archived").length },
+    { id: "acknowledged", label: "Acknowledged", count: alerts.filter((a) => a.status === "acknowledged").length },
+    { id: "resolved", label: "Resolved", count: alerts.filter((a) => a.status === "resolved").length },
+    { id: "archived", label: "Archived (Audit)", count: archivedCount },
+  ];
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
@@ -100,17 +127,34 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
           <p className="text-xs text-[#7d8da3] mt-0.5">Automated Event Dispatching • Click any alert to reconstruct vehicle route</p>
         </div>
 
-        {/* Filter buttons */}
-        <div className="flex items-center gap-2 bg-[#0a0e14] border border-[#1e2a3a] p-1 rounded-xl text-xs">
-          {["all", "pending", "acknowledged", "resolved"].map((st) => (
+        {/* Filter tabs with live counts */}
+        <div className="flex items-center gap-1.5 bg-[#0a0e14] border border-[#1e2a3a] p-1 rounded-xl text-xs overflow-x-auto max-w-full">
+          {filterTabs.map((tab) => (
             <button
-              key={st}
-              onClick={() => setFilterStatus(st)}
-              className={`px-3 py-1.5 rounded-lg capitalize font-semibold cursor-pointer transition-all ${
-                filterStatus === st ? "bg-blue-600 text-white shadow-sm" : "text-[#7d8da3] hover:text-white"
+              key={tab.id}
+              onClick={() => setFilterStatus(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg capitalize font-semibold cursor-pointer transition-all shrink-0 ${
+                filterStatus === tab.id
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-[#7d8da3] hover:text-white hover:bg-[#162130]"
               }`}
             >
-              {st}
+              <span>{tab.label}</span>
+              {tab.count > 0 && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                    filterStatus === tab.id
+                      ? "bg-white/20 text-white"
+                      : tab.id === "pending"
+                      ? "bg-red-500/20 text-red-400"
+                      : tab.id === "archived"
+                      ? "bg-purple-500/20 text-purple-400"
+                      : "bg-[#1e2a3a] text-[#7d8da3]"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -138,13 +182,16 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
             const camCity = item.cameras?.city || "Gujarat Network";
             const targetPlate = extractPlate(item);
 
+            const isArchived = item.status === "archived";
+            const borderClass = isArchived
+              ? "border-l-4 border-l-purple-500 opacity-90"
+              : borderColors[item.severity] || borderColors.medium;
+
             return (
               <div
                 key={item.id}
                 onClick={() => handleTrackAlert(item)}
-                className={`bg-[#111823] border border-[#1e2a3a] rounded-2xl p-5 shadow-lg ${
-                  borderColors[item.severity] || borderColors.medium
-                } flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-500/60 hover:bg-[#131d2b] cursor-pointer group`}
+                className={`bg-[#111823] border border-[#1e2a3a] rounded-2xl p-5 shadow-lg ${borderClass} flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-500/60 hover:bg-[#131d2b] cursor-pointer group`}
                 title={`Click to track route of ${targetPlate}`}
               >
                 <div className="flex-1">
@@ -172,6 +219,8 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
                           ? "bg-amber-500/10 text-amber-400"
                           : item.status === "acknowledged"
                           ? "bg-blue-500/10 text-blue-400"
+                          : item.status === "archived"
+                          ? "bg-purple-500/15 text-purple-300 border border-purple-500/30"
                           : "bg-emerald-500/10 text-emerald-400"
                       }`}
                     >
@@ -216,54 +265,85 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
                     Track Vehicle ↗
                   </button>
 
-                  {item.status === "pending" && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUpdateStatus(item.id, "acknowledged");
-                      }}
-                      className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-600/20"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      Acknowledge
-                    </button>
-                  )}
-                  {item.status === "acknowledged" && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUpdateStatus(item.id, "resolved");
-                      }}
-                      className="flex items-center gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-600/20"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      Mark Resolved
-                    </button>
-                  )}
-                  {item.status !== "resolved" && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUpdateStatus(item.id, "dismissed");
-                      }}
-                      className="flex items-center gap-1.5 text-xs font-semibold bg-[#0a0e14] hover:bg-[#16233b] border border-[#1e2a3a] text-[#7d8da3] hover:text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      Dismiss
-                    </button>
-                  )}
+                  {isArchived ? (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpdateStatus(item.id, "pending");
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/40 px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md"
+                        title="Restore alert to active pending queue"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Restore
+                      </button>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteAlert(item.id);
-                    }}
-                    className="flex items-center gap-1.5 text-xs font-semibold bg-[#0a0e14] hover:bg-red-500/20 border border-[#1e2a3a] hover:border-red-500/40 text-[#7d8da3] hover:text-red-400 px-3 py-2 rounded-xl transition-all cursor-pointer"
-                    title="Delete alert entry"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Delete
-                  </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteAlert(item.id);
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-semibold bg-[#0a0e14] hover:bg-red-500/20 border border-[#1e2a3a] hover:border-red-500/40 text-[#7d8da3] hover:text-red-400 px-3 py-2 rounded-xl transition-all cursor-pointer"
+                        title="Permanently hard-delete alert from database"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Hard Delete
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {item.status === "pending" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUpdateStatus(item.id, "acknowledged");
+                          }}
+                          className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-600/20"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          Acknowledge
+                        </button>
+                      )}
+                      {item.status === "acknowledged" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUpdateStatus(item.id, "resolved");
+                          }}
+                          className="flex items-center gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-600/20"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          Mark Resolved
+                        </button>
+                      )}
+                      {item.status !== "resolved" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUpdateStatus(item.id, "dismissed");
+                          }}
+                          className="flex items-center gap-1.5 text-xs font-semibold bg-[#0a0e14] hover:bg-[#16233b] border border-[#1e2a3a] text-[#7d8da3] hover:text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Dismiss
+                        </button>
+                      )}
+
+                      {/* Soft-Delete: Archive for police audit compliance */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpdateStatus(item.id, "archived");
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-semibold bg-[#0a0e14] hover:bg-purple-500/15 border border-[#1e2a3a] hover:border-purple-500/40 text-[#7d8da3] hover:text-purple-300 px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+                        title="Archive alert (Soft-delete: preserves legal audit evidence)"
+                      >
+                        <Archive className="h-3.5 w-3.5" />
+                        Archive
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             );

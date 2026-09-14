@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Shield, Bell, Radio, LogOut, User, Menu, Globe, ChevronDown, Check } from "lucide-react";
+import { Shield, Bell, Radio, LogOut, User, Menu, Globe, ChevronDown, Check, Volume2, VolumeX } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { isAudioMuted, setAudioMuted } from "../utils/audioAlert";
 
 export default function Navbar({ 
   activePage, 
@@ -15,6 +16,22 @@ export default function Navbar({
   const { language, setLanguage, t } = useLanguage();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langMenuRef = useRef(null);
+
+  const [audioMuted, setAudioMutedState] = useState(() => isAudioMuted());
+
+  useEffect(() => {
+    const handleMuteChange = (e) => {
+      setAudioMutedState(e.detail?.muted ?? isAudioMuted());
+    };
+    window.addEventListener("sentinel-audio-mute-changed", handleMuteChange);
+    return () => window.removeEventListener("sentinel-audio-mute-changed", handleMuteChange);
+  }, []);
+
+  const toggleAudioMute = () => {
+    const next = !audioMuted;
+    setAudioMutedState(next);
+    setAudioMuted(next);
+  };
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -111,6 +128,19 @@ export default function Navbar({
           )}
         </div>
 
+
+        {/* Audio Alert Chime Mute/Unmute Toggle */}
+        <button
+          onClick={toggleAudioMute}
+          className={`p-2 rounded-xl border transition-all cursor-pointer ${
+            audioMuted
+              ? "border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+              : "border-[#1e2a3a] bg-[#0a0e14] text-[#7d8da3] hover:text-white hover:border-blue-500/50"
+          }`}
+          title={audioMuted ? "Unmute Alert Chimes (Currently Muted)" : "Mute Alert Chimes (Currently Active)"}
+        >
+          {audioMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
 
         {/* Alert notification bell */}
         <button
