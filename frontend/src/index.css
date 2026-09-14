@@ -139,6 +139,15 @@ html:not(.dark) .divide-\[\#1e2a3a\]\/60 {
   border-color: #e2e8f0 !important;
 }
 
+/* Explicit Light Black Borders for Camera Boxes */
+html:not(.dark) .border-black\/35 {
+  border-color: rgba(24, 24, 27, 0.35) !important;
+}
+
+html:not(.dark) .border-black\/20 {
+  border-color: rgba(24, 24, 27, 0.20) !important;
+}
+
 /* Text Colors for Light Mode */
 html:not(.dark) .text-white {
   color: #0f172a !important;

@@ -161,10 +161,10 @@ export default function CameraGridPage() {
                 key={cam.id}
                 onMouseEnter={() => handleMouseEnter(cam.id)}
                 onMouseLeave={() => handleMouseLeave(cam.id)}
-                className="bg-[#111823] border border-[#1e2a3a] hover:border-blue-500/50 rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all group"
+                className="bg-[#111823] border border-black/35 dark:border-zinc-800 hover:border-blue-500/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg flex flex-col transition-all group"
               >
                 {/* Tile Header */}
-                <div className="px-3.5 py-2.5 bg-[#0d141f] border-b border-[#1e2a3a] flex items-center justify-between">
+                <div className="px-3.5 py-2.5 bg-[#0d141f] border-b border-black/20 dark:border-zinc-800 flex items-center justify-between">
                   <div className="flex items-center gap-2 truncate">
                     <span
                       className={`h-2 w-2 rounded-full ${
@@ -186,7 +186,7 @@ export default function CameraGridPage() {
                 </div>
 
                 {/* Video Stream or Static Snapshot Container */}
-                <div className="relative aspect-video w-full bg-black overflow-hidden">
+                <div className="relative aspect-video w-full bg-black overflow-hidden border-y border-black/20 dark:border-transparent">
                   {isLive ? (
                     <HlsPlayer
                       streamUrl={cam.hls_url}
@@ -260,8 +260,8 @@ export default function CameraGridPage() {
       {/* Fullscreen Video Modal */}
       {activeCamModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#111823] border border-[#1e2a3a] rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl">
-            <div className="px-6 py-4 border-b border-[#1e2a3a] flex items-center justify-between">
+          <div className="bg-[#111823] border border-black/35 dark:border-zinc-800 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 border-b border-black/20 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>

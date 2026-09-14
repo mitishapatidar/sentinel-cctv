@@ -355,8 +355,8 @@ export default function DashboardPage({ setActivePage }) {
       {/* Selected Camera Feed Modal */}
       {selectedCamera && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#111823] border border-[#1e2a3a] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
-            <div className="px-5 py-4 border-b border-[#1e2a3a] flex items-center justify-between">
+          <div className="bg-[#111823] border border-black/35 dark:border-zinc-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+            <div className="px-5 py-4 border-b border-black/20 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white">{selectedCamera.name}</h3>
                 <p className="text-[10px] text-[#7d8da3]">{selectedCamera.city} • {selectedCamera.department} • ID: {selectedCamera.id}</p>
