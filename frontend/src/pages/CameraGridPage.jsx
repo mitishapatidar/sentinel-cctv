@@ -15,6 +15,14 @@ export default function CameraGridPage() {
   const hoverTimerRef = useRef(null);
   const hoverStartTimeRef = useRef(null);
 
+  const getSnapshotUrl = (camId, timestamp) => {
+    const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    if (isLocal) {
+      return `http://127.0.0.1:8000/api/cameras/${camId}/snapshot?t=${timestamp}`;
+    }
+    return `/snapshots/${camId}.jpg`;
+  };
+
   // Auto-refresh snapshot images every 3 minutes (180 seconds)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -182,16 +190,21 @@ export default function CameraGridPage() {
                       cameraName={cam.name}
                       cameraId={cam.id}
                       hoverStartTime={hoverStartTimeRef.current}
-                      snapshotUrl={`http://127.0.0.1:8000/api/cameras/${cam.id}/snapshot?t=${snapshotTimestamp}`}
+                      snapshotUrl={getSnapshotUrl(cam.id, snapshotTimestamp)}
                     />
                   ) : (
                     <div className="relative w-full h-full bg-[#0a0e14] flex items-center justify-center">
                       <img
-                        src={`http://127.0.0.1:8000/api/cameras/${cam.id}/snapshot?t=${snapshotTimestamp}`}
+                        src={getSnapshotUrl(cam.id, snapshotTimestamp)}
                         alt={cam.name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
-                          e.target.src = "http://127.0.0.1:8000/api/cameras/cam01/snapshot";
+                          if (!e.target.dataset.triedFallback) {
+                            e.target.dataset.triedFallback = "true";
+                            e.target.src = `/snapshots/${cam.id}.jpg`;
+                          } else {
+                            e.target.src = "/snapshots/cam01.jpg";
+                          }
                         }}
                       />
                       {/* Snapshot Indicator Badge */}
@@ -263,6 +276,7 @@ export default function CameraGridPage() {
                 streamUrl={activeCamModal.hls_url}
                 cameraName={activeCamModal.name}
                 cameraId={activeCamModal.id}
+                snapshotUrl={getSnapshotUrl(activeCamModal.id, snapshotTimestamp)}
               />
             </div>
           </div>

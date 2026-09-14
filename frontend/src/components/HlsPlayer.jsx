@@ -94,6 +94,15 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId, hoverStartT
     };
 
     const loadStream = () => {
+      const isHttpsPage = typeof window !== "undefined" && window.location.protocol === "https:";
+      const isHttpLocal = streamUrl && (streamUrl.startsWith("http://127.0.0.1") || streamUrl.startsWith("http://localhost"));
+
+      if (isHttpsPage && isHttpLocal) {
+        // Local relay not directly reachable over HTTPS without SSL reverse proxy - switch seamlessly to high-speed surveillance loop
+        switchToFallback();
+        return;
+      }
+
       if (Hls.isSupported() && videoRef.current && streamUrl && streamUrl.endsWith(".m3u8")) {
         // Fast timeout: if upstream stream doesn't connect within 6s, switch to fallback loop
         fallbackTimeout = setTimeout(() => {
@@ -169,7 +178,8 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId, hoverStartT
     };
   }, [streamUrl, cameraId]);
 
-  const fallbackSnapshot = `http://127.0.0.1:8000/api/cameras/${cameraId}/snapshot`;
+  const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const fallbackSnapshot = isLocal ? `http://127.0.0.1:8000/api/cameras/${cameraId}/snapshot` : `/snapshots/${cameraId}.jpg`;
 
   return (
     <div className="relative w-full h-full bg-[#0a0e14] overflow-hidden flex items-center justify-center group">
@@ -179,7 +189,12 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId, hoverStartT
         alt={cameraName}
         className="absolute inset-0 w-full h-full object-cover"
         onError={(e) => {
-          e.target.src = "http://127.0.0.1:8000/api/cameras/cam01/snapshot";
+          if (!e.target.dataset.triedFallback) {
+            e.target.dataset.triedFallback = "true";
+            e.target.src = `/snapshots/${cameraId}.jpg`;
+          } else {
+            e.target.src = "/snapshots/cam01.jpg";
+          }
         }}
       />
 
