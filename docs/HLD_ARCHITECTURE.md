@@ -1,7 +1,7 @@
-﻿# 🛡️ SENTINEL — High-Level Design (HLD) & Technical Architecture
+# 🛡️ SENTINEL — High-Level Design (HLD) & Technical Architecture
 **Statewide Centralised CCTV Intelligence Platform**  
-**Gujarat Police Innovation Challenge 2026 (GPIC)**  
-*Jurisdiction: State Crime Record Bureau (SCRB), Gandhinagar, Gujarat Police*
+*Jurisdiction: State Crime Record Bureau (SCRB), Gandhinagar, Gujarat Police*  
+*Author & Lead Architect: Mitisha Patidar*
 
 ---
 
@@ -14,9 +14,9 @@ The Government of Gujarat operates over 80,000 CCTV cameras deployed across 26 d
 - Ports & Transport Department (Coastal Security Towers)
 - Panchayat & Rural Development (Gram Panchayat security surveillance)
 
-These video management systems (VMS) operate as isolated data silos using incompatible proprietary protocols (Hikvision, Dahua, Honeywell, Milestone, Axis), lacking a unified situational operational picture. In criminal investigations, cross-department tracking of suspect vehicles requires days of manual footages gathering, by which time the suspects have crossed state borders.
+These video management systems (VMS) operate as isolated data silos using incompatible proprietary protocols (Hikvision, Dahua, Honeywell, Milestone, Axis), lacking a unified situational operational picture. In criminal investigations, cross-department tracking of suspect vehicles requires days of manual footage gathering, by which time the suspects have crossed state borders.
 
-**SENTINEL** resolves this via an interoperable **Model 1 (GIS Registry) + Model 2 (Unified Video Viewing & Analytics) Hybrid Architecture**, creating an integrated surveillance command platform without requiring departments to discard their existing hardware investments.
+**SENTINEL** resolves this via an interoperable **Model 1 (GIS Registry) + Model 2 (Unified Video Viewing & Streaming Gateway) + Model 3 (AI Video Analytics) Hybrid Architecture**, creating an integrated surveillance command platform without requiring departments to discard their existing hardware investments.
 
 ---
 
@@ -26,6 +26,7 @@ These video management systems (VMS) operate as isolated data silos using incomp
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                      SENTINEL CONTROL ROOM UI (React 19)                │
 │   Command Dashboard │ GIS Gujarat Map │ Multi-Grid HLS │ ANPR Tracing  │
+│   Emergency Alerts  │ Watchlist Hub   │ Asset Registry │ Audit Trail   │
 └────────────────────────────────────┬────────────────────────────────────┘
                                      │ HTTPS / WSS
 ┌────────────────────────────────────▼────────────────────────────────────┐
@@ -61,16 +62,18 @@ These video management systems (VMS) operate as isolated data silos using incomp
 - **Multi-Protocol Translation:** Bridges heterogeneous departmental feeds into industry-standard H.264/H.265 over HLS and WebRTC (WHEP) for sub-second browser latency.
 - **Bandwidth Optimization:** Employs dynamic stream downscaling (4K stream at edge is transcoded to 720p/1080p for multi-view grid displays, saving up to 65% backhaul WAN bandwidth).
 - **Transport Reliability:** Mandates TCP protocol transport (`rtsp_transport;tcp`) preventing UDP packet loss over NAT and corporate state police firewalls.
+- **Multi-Layer GIS Engine:** 4-layer map switcher on both Dashboard and Vehicle Search supporting Google Maps (default roadmap), Google Satellite, Google Terrain, and OpenStreetMap.
 
 ### 3.3 Layer 3 — Automated ANPR Trajectory & Route Reconstruction
-- **Mandatory Evaluation Compliance:** Reconstructs the complete historical path taken by any target registration number across the integrated network.
+- **Automated Trajectory Tracing:** Reconstructs the complete historical path taken by any target registration number across the integrated network in under 1 second.
 - **Chronological Correlation:** Orders sightings monotonically using hardware Presentation Timestamps (`pts_ms`), computing transit speed and direction vectors between checkpoints.
-- **Visual Trajectory:** Renders continuous directional route polylines on the Gujarat State Map with numbered sequential pins.
+- **Visual Trajectory & Smart Zoom:** Renders continuous directional route polylines on the Gujarat State Map with numbered sequential pins (`1`, `2`, `3`, `4`) and Auto-Fit Bounds smart zooming.
 
 ### 3.4 Layer 4 — Watchlist Correlation & Real-time Alerting
 - **Registry Integration:** Direct synchronization with eGujCop, VAHAN, and National Crime Records Bureau (NCRB) stolen vehicle databases.
 - **Latency Budget:** Real-time cross-referencing completes within < 1.2 seconds from frame capture to operator dispatch.
 - **Real-Time Push:** Supabase WebSocket channel instantly pushes alerts to all logged-in command workstations without polling overhead.
+- **Emergency Feed Lifecycle:** Systematic alert states (`All Active`, `Pending`, `Acknowledged`, `Resolved`, `Archived`) with sound dispatch and toast notifications.
 
 ---
 
@@ -85,7 +88,7 @@ These video management systems (VMS) operate as isolated data silos using incomp
   - *Cold Tier (Encrypted Vault Archive):* Long-term FIR-referenced court cases.
 
 ### 4.2 Chain of Custody & Section 65B Indian Evidence Act Admissibility
-- Every operator interaction (who viewed CAM04, who queried plate `GJ-05-AB-1234`, who acknowledged alert #ALT-9021) is written to an append-only audit trail.
+- Every operator interaction (who viewed CAM04, who queried plate `GJ-01-AB-1234`, who acknowledged alert #ALT-9021) is written to an append-only audit trail.
 - Generates certified Printable Evidence Dossiers with digital SHA-256 cryptographic hashes for direct submission in criminal trials.
 
 ### 4.3 Zero-Trust Role-Based Access Control (RBAC)
@@ -106,3 +109,7 @@ To support the full Gujarat statewide deployment, SENTINEL employs a **Hub-and-S
 2. **Central Cloud Aggregator (Gandhinagar SCRB Data Center):**
    - High-throughput Kafka / RabbitMQ ingestion cluster handles metadata bursts of up to 50,000 detections/second.
    - PostGIS cluster partitioned by District ID ensures sub-50ms query latency for vehicle trajectory searches.
+
+---
+
+*SENTINEL — Statewide Centralised CCTV Intelligence Platform • State Crime Record Bureau (SCRB), Gandhinagar.*

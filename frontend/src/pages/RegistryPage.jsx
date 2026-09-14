@@ -329,7 +329,7 @@ export default function RegistryPage({ setActivePage }) {
             {/* Table Footer */}
             <div className="border-t border-[#1e2a3a] px-4 py-3 bg-[#0d141f] flex items-center justify-between text-xs text-[#7d8da3]">
               <span>Showing {filtered.length} of {cameras.length} registered CCTV assets</span>
-              <span className="font-mono text-[11px]">GPIC 2026 • Model 1 Architecture</span>
+              <span className="font-mono text-[11px]">SCRB Gandhinagar • Model 1 Architecture</span>
             </div>
           </div>
         )}

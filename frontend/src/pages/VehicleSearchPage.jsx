@@ -894,7 +894,7 @@ export default function VehicleSearchPage({ initialPlate }) {
         <div className="max-w-6xl">
           <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 mb-1">
             <Car className="h-4 w-4" />
-            <span>MANDATORY TEST CASE • STATEWIDE ANPR TRAJECTORY RECONSTRUCTION</span>
+            <span>REAL-TIME INVESTIGATION • STATEWIDE ANPR TRAJECTORY RECONSTRUCTION</span>
           </div>
           <h1 className="text-xl font-bold text-white">Vehicle Route Reconstruction & Tracing</h1>
           <p className="text-xs text-[#7d8da3] mt-1">

@@ -2,7 +2,7 @@ import os
 import time
 import cv2
 
-# Rule from Official Hackathon Checklist: Force RTSP over TCP for RTSP streams
+# System Requirement: Force RTSP over TCP for RTSP streams to prevent packet loss
 # For HTTP/HLS streams, avoid forcing rtsp_transport to prevent connection stalls.
 
 class FrameGrabber:

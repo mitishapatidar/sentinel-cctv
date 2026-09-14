@@ -115,7 +115,7 @@ export default function LandingPage({ onEnterLogin }) {
         <div className="text-center mb-16">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Model 1 + Model 2 Hybrid Architecture</h2>
           <p className="text-sm text-[#7d8da3] max-w-2xl mx-auto">
-            Engineered specifically to solve the Gujarat Police Innovation Challenge requirements without displacing existing department VMS infrastructure.
+            Engineered specifically for Gujarat Police statewide surveillance operations without displacing existing department VMS infrastructure.
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export default function LandingPage({ onEnterLogin }) {
           </div>
 
           <div className="w-full md:w-80 p-6 rounded-2xl bg-[#0a0e14] border border-[#1e2a3a]">
-            <p className="text-xs uppercase tracking-wider text-[#7d8da3] mb-4 font-semibold">Contact & Evaluation Center</p>
+            <p className="text-xs uppercase tracking-wider text-[#7d8da3] mb-4 font-semibold">Contact & Command Center</p>
             <div className="space-y-4 text-xs">
               <div className="flex items-center gap-3 text-white">
                 <MapPin className="h-4 w-4 text-blue-400" />
@@ -192,7 +192,7 @@ export default function LandingPage({ onEnterLogin }) {
               </div>
               <div className="flex items-center gap-3 text-white">
                 <Mail className="h-4 w-4 text-blue-400" />
-                <span>sentinel.hackathon@gujarat.gov.in</span>
+                <span>sentinel.command@gujarat.gov.in</span>
               </div>
             </div>
           </div>
@@ -201,7 +201,7 @@ export default function LandingPage({ onEnterLogin }) {
 
       {/* Footer */}
       <footer className="mt-auto border-t border-[#1e2a3a] py-6 px-6 text-center text-xs text-[#7d8da3]">
-        SENTINEL Unified CCTV Platform • Gujarat Police Innovation Challenge 2026 • Real-world Deployment Model
+        SENTINEL Unified CCTV Platform • State Crime Record Bureau (SCRB), Gandhinagar • Gujarat Police
       </footer>
     </div>
   );
