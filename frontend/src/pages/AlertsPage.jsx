@@ -22,7 +22,7 @@ import { INITIAL_ALERTS } from "../data/alertsData";
 
 export default function AlertsPage({ setActivePage, onTrackVehicle }) {
   const [alerts, setAlerts] = useState(INITIAL_ALERTS);
-  const [filterStatus, setFilterStatus] = useState("pending");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [loading, setLoading] = useState(false);
 
   const fetchAlerts = async () => {
@@ -108,8 +108,8 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
   const archivedCount = alerts.filter((a) => a.status === "archived").length;
 
   const filterTabs = [
-    { id: "pending", label: "Pending", count: pendingCount },
     { id: "all", label: "All Active", count: alerts.filter((a) => a.status !== "archived").length },
+    { id: "pending", label: "Pending", count: pendingCount },
     { id: "acknowledged", label: "Acknowledged", count: alerts.filter((a) => a.status === "acknowledged").length },
     { id: "resolved", label: "Resolved", count: alerts.filter((a) => a.status === "resolved").length },
     { id: "archived", label: "Archived (Audit)", count: archivedCount },

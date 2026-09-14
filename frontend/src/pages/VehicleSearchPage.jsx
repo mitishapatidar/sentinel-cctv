@@ -1,18 +1,81 @@
 import React, { useState, useEffect } from "react";
-import { Search, Car, Calendar, Clock, MapPin, CheckCircle, AlertTriangle, ArrowRight, Download, Eye, Printer, Shield } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Polyline, Popup, GeoJSON } from "react-leaflet";
+import { Search, Car, Calendar, Clock, MapPin, CheckCircle, AlertTriangle, ArrowRight, Download, Eye, Printer, Shield, Layers } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Polyline, Popup, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import gujaratBorder from "../data/gujaratBorder.json";
 import { supabase } from "../supabaseClient";
+
+// Real Google Maps & OpenStreetMap tile layers (Identical to Dashboard GIS engine)
+const GOOGLE_MAP_LAYERS = {
+  streets: {
+    id: "streets",
+    label: "Google Maps",
+    icon: "🗺️",
+    url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
+    attribution: "&copy; Google Maps",
+    maxZoom: 20,
+  },
+  satellite: {
+    id: "satellite",
+    label: "Google Satellite",
+    icon: "🛰️",
+    url: "https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
+    attribution: "&copy; Google Maps Satellite",
+    maxZoom: 20,
+  },
+  terrain: {
+    id: "terrain",
+    label: "Google Terrain",
+    icon: "🏔️",
+    url: "https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
+    attribution: "&copy; Google Maps Terrain",
+    maxZoom: 20,
+  },
+  osm: {
+    id: "osm",
+    label: "OpenStreetMap",
+    icon: "🏙️",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    subdomains: ["a", "b", "c"],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
+  },
+};
+
+// Automatic Smart-Zoom Component: Automatically zooms in when vehicle points are close, or fits statewide route
+function AutoFitBounds({ coordinates }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!coordinates || coordinates.length === 0) return;
+
+    if (coordinates.length === 1) {
+      map.setView(coordinates[0], 14, { animate: true });
+      return;
+    }
+
+    const bounds = L.latLngBounds(coordinates);
+    map.fitBounds(bounds, {
+      padding: [60, 60],
+      maxZoom: 15,
+      animate: true,
+    });
+  }, [coordinates, map]);
+
+  return null;
+}
 
 const createNumberedIcon = (number, isAlert = false) => {
   return L.divIcon({
     className: "route-marker",
     html: `<div style="
-      background-color: ${isAlert ? "#ef4444" : "#3b82f6"};
+      background-color: ${isAlert ? "#ef4444" : "#2563eb"};
       color: white;
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -20,10 +83,10 @@ const createNumberedIcon = (number, isAlert = false) => {
       font-size: 11px;
       font-weight: bold;
       border: 2px solid white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     ">${number}</div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
   });
 };
 
@@ -38,6 +101,9 @@ export default function VehicleSearchPage({ initialPlate }) {
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
+  const [mapType, setMapType] = useState("streets"); // default: Google Maps
+
+  const activeLayer = GOOGLE_MAP_LAYERS[mapType] || GOOGLE_MAP_LAYERS.streets;
 
 
   const mockTraffics = {
@@ -868,32 +934,32 @@ export default function VehicleSearchPage({ initialPlate }) {
               </span>
             </div>
 
-            {/* Fixed 4 Columns, Auto-Expanding Rows */}
+            {/* Fixed 4 Columns, Auto-Expanding Rows (Option 1: Unified Slate & Police Navy) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
               {[
                 // Row 1
-                { plate: "GJ-01-AB-1234", tag: "Stolen Swift", color: "border-red-500/30 text-red-400 hover:bg-red-500/10" },
-                { plate: "GJ-05-CD-5678", tag: "Amber Creta", color: "border-red-500/40 text-red-300 hover:bg-red-500/20" },
-                { plate: "GJ-18-XY-9012", tag: "Hit & Run City", color: "border-orange-500/30 text-orange-400 hover:bg-orange-500/10" },
-                { plate: "GJ-06-ER-3456", tag: "Challan Defaulter", color: "border-amber-500/30 text-amber-400 hover:bg-amber-500/10" },
+                { plate: "GJ-01-AB-1234", tag: "Stolen Swift", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
+                { plate: "GJ-05-CD-5678", tag: "Amber Creta", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
+                { plate: "GJ-18-XY-9012", tag: "Hit & Run City", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
+                { plate: "GJ-06-ER-3456", tag: "Challan Defaulter", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
 
                 // Row 2
-                { plate: "GJ-03-GH-7890", tag: "Contraband Fortuner", color: "border-purple-500/30 text-purple-400 hover:bg-purple-500/10" },
-                { plate: "GJ-12-KL-4321", tag: "Carjacking Baleno", color: "border-blue-500/30 text-blue-400 hover:bg-blue-500/10" },
-                { plate: "GJ-15-PQ-2109", tag: "Armed Heist Seltos", color: "border-rose-500/30 text-rose-400 hover:bg-rose-500/10" },
-                { plate: "GJ-10-RS-6543", tag: "Stolen Enfield", color: "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10" },
+                { plate: "GJ-03-GH-7890", tag: "Contraband Fortuner", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
+                { plate: "GJ-12-KL-4321", tag: "Carjacking Baleno", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
+                { plate: "GJ-15-PQ-2109", tag: "Armed Heist Seltos", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
+                { plate: "GJ-10-RS-6543", tag: "Stolen Enfield", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
 
                 // Row 3
-                { plate: "GJ-08-TU-1098", tag: "Bolero Evader", color: "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" },
-                { plate: "GJ-23-VW-5432", tag: "Snatching Activa", color: "border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" },
-                { plate: "GJ-27-MN-8765", tag: "Overload Brezza", color: "border-amber-500/30 text-amber-400 hover:bg-amber-500/10" },
-                { plate: "GJ-16-ZA-9876", tag: "Cloned Plate i20", color: "border-purple-500/30 text-purple-400 hover:bg-purple-500/10" },
+                { plate: "GJ-08-TU-1098", tag: "Bolero Evader", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
+                { plate: "GJ-23-VW-5432", tag: "Snatching Activa", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
+                { plate: "GJ-27-MN-8765", tag: "Overload Brezza", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
+                { plate: "GJ-16-ZA-9876", tag: "Cloned Plate i20", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
 
                 // Row 4
-                { plate: "GJ-02-BA-4589", tag: "Smuggling Scorpio", color: "border-rose-500/30 text-rose-400 hover:bg-rose-500/10" },
-                { plate: "GJ-04-DE-7712", tag: "Toll Evader", color: "border-blue-500/30 text-blue-400 hover:bg-blue-500/10" },
-                { plate: "GJ-14-KK-3390", tag: "Missing Eeco", color: "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" },
-                { plate: "GJ-09-PP-6211", tag: "Unregistered Thar", color: "border-orange-500/30 text-orange-400 hover:bg-orange-500/10" },
+                { plate: "GJ-02-BA-4589", tag: "Smuggling Scorpio", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
+                { plate: "GJ-04-DE-7712", tag: "Toll Evader", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
+                { plate: "GJ-14-KK-3390", tag: "Missing Eeco", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
+                { plate: "GJ-09-PP-6211", tag: "Unregistered Thar", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
               ].map((t) => (
                 <button
                   key={t.plate}
@@ -901,11 +967,15 @@ export default function VehicleSearchPage({ initialPlate }) {
                     setQuery(t.plate);
                     handleSearch(t.plate);
                   }}
-                  className={`px-3 py-2 rounded-xl bg-[#0a0e14] border ${t.color} cursor-pointer font-mono text-[11px] transition-all flex items-center justify-between gap-1.5 hover:shadow-sm hover:scale-[1.01]`}
+                  className="px-3 py-2 rounded-xl bg-white dark:bg-[#0d131c] border border-slate-200 dark:border-[#1e2a3a] hover:border-blue-500/70 hover:bg-blue-50/40 dark:hover:bg-blue-500/10 hover:shadow-xs cursor-pointer font-mono text-[11px] transition-all flex items-center justify-between gap-1.5 text-left group"
                   title={`${t.plate} (${t.tag})`}
                 >
-                  <span className="font-bold truncate">{t.plate}</span>
-                  <span className="text-[10px] opacity-80 truncate">({t.tag})</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors truncate">
+                    {t.plate}
+                  </span>
+                  <span className={`text-[10px] font-sans font-semibold px-1.5 py-0.5 rounded border truncate shrink-0 ${t.badge}`}>
+                    {t.tag}
+                  </span>
                 </button>
               ))}
             </div>
@@ -949,27 +1019,49 @@ export default function VehicleSearchPage({ initialPlate }) {
           {/* Map + Route Traversal */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-[#111823] border border-[#1e2a3a] rounded-2xl overflow-hidden shadow-xl flex flex-col">
-              <div className="px-5 py-3.5 border-b border-[#1e2a3a] flex items-center justify-between">
+              <div className="px-4 py-2.5 border-b border-[#1e2a3a] flex flex-wrap items-center justify-between gap-2 bg-[#0d141f] shrink-0">
                 <div className="flex items-center gap-2 text-xs font-semibold text-white">
                   <MapPin className="h-4 w-4 text-blue-400" />
                   <span>Traversed Route on Gujarat State Network</span>
                 </div>
-                <span className="text-xs text-emerald-400 font-mono font-semibold">
-                  {results.timeline.length} Checkpoints Correlated
-                </span>
+
+                {/* Google Map Layer Selector (Same as Dashboard) */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-[#0a0e14] p-0.5 rounded-lg border border-[#1e2a3a]">
+                    {Object.values(GOOGLE_MAP_LAYERS).map((layer) => (
+                      <button
+                        key={layer.id}
+                        onClick={() => setMapType(layer.id)}
+                        className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                          mapType === layer.id
+                            ? "bg-blue-600 text-white font-semibold shadow-sm"
+                            : "text-[#7d8da3] hover:text-white hover:bg-[#16233b]"
+                        }`}
+                      >
+                        <span>{layer.icon}</span>
+                        <span>{layer.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    {results.timeline.length} Checkpoints
+                  </span>
+                </div>
               </div>
 
-              <div className="h-[420px] w-full relative z-0">
+              <div className="h-[460px] w-full relative z-0">
                 <MapContainer
                   center={[22.5, 71.5]}
                   zoom={7}
                   style={{ height: "100%", width: "100%", backgroundColor: "#0a0e14" }}
                 >
                   <TileLayer
-                    attribution='&copy; Google Maps'
-                    url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
-                    subdomains={["0", "1", "2", "3"]}
-                    maxZoom={20}
+                    key={activeLayer.id}
+                    attribution={activeLayer.attribution}
+                    url={activeLayer.url}
+                    subdomains={activeLayer.subdomains}
+                    maxZoom={activeLayer.maxZoom}
                   />
 
                   {/* Gujarat State Border Light Black Outline */}
@@ -984,29 +1076,50 @@ export default function VehicleSearchPage({ initialPlate }) {
                     }}
                   />
 
+                  {/* Connecting Trajectory Polyline */}
                   <Polyline
                     positions={routeCoordinates}
-                    color="#3b82f6"
+                    color="#2563eb"
                     weight={4}
                     dashArray="6, 8"
                   />
 
+                  {/* Auto-Zoom Component: Zooms in closely if points are nearby, or fits statewide if distant */}
+                  <AutoFitBounds coordinates={routeCoordinates} />
+
+                  {/* Sequential Numbered Checkpoint Markers */}
                   {results.timeline.map((step) => (
                     <Marker
                       key={step.order}
                       position={[step.lat, step.lng]}
                       icon={createNumberedIcon(step.order, results.isWatchlist && step.order === results.timeline.length)}
                     >
-                      <Popup>
-                        <div className="p-2 text-[#0a0e14]">
-                          <p className="font-bold text-xs">Step {step.order}: {step.name}</p>
-                          <p className="text-[10px] text-gray-600">{step.timestamp}</p>
-                          <p className="text-[10px] text-blue-600 font-bold">Confidence: {step.confidence}</p>
+                      <Popup className="custom-popup">
+                        <div className="p-2.5 text-[#0a0e14] min-w-[180px]">
+                          <div className="flex items-center justify-between border-b border-gray-200 pb-1 mb-1.5">
+                            <span className="font-bold text-xs text-blue-700">Checkpoint #{step.order}</span>
+                            <span className="text-[9px] font-mono font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                              {step.camId}
+                            </span>
+                          </div>
+                          <p className="font-bold text-xs text-gray-900">{step.name}</p>
+                          <p className="text-[10px] text-gray-600 mt-0.5">{step.city} • {step.timestamp}</p>
+                          <div className="flex items-center justify-between text-[10px] mt-1.5 pt-1 border-t border-gray-100 font-semibold">
+                            <span className="text-emerald-700">Conf: {step.confidence}</span>
+                            <span className="text-gray-800">Speed: {step.speed}</span>
+                          </div>
                         </div>
                       </Popup>
                     </Marker>
                   ))}
                 </MapContainer>
+
+                {/* Map Brand Badge */}
+                <div className="absolute bottom-2 left-2 z-[400] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-[10px] text-white/80 flex items-center gap-1.5 pointer-events-none">
+                  <span className="font-semibold text-white">{activeLayer.label}</span>
+                  <span className="text-white/40">•</span>
+                  <span>Gujarat State GIS</span>
+                </div>
               </div>
             </div>
 
@@ -1017,22 +1130,29 @@ export default function VehicleSearchPage({ initialPlate }) {
                 Detection Chronology
               </h3>
 
-              <div className="space-y-4 flex-1 overflow-y-auto pr-1">
-                {results.timeline.map((item) => (
-                  <div key={item.order} className="relative pl-6 pb-2 border-l border-[#1e2a3a] last:border-0">
-                    <div className="absolute -left-3 top-0 h-6 w-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center border-2 border-[#111823]">
+              <div className="space-y-4 flex-1 overflow-y-auto pl-4 pr-1 py-1">
+                {results.timeline.map((item, idx) => (
+                  <div
+                    key={item.order}
+                    className={`relative pl-6 pb-2 border-l-2 ${
+                      idx === results.timeline.length - 1
+                        ? "border-transparent"
+                        : "border-slate-200 dark:border-[#1e2a3a]"
+                    }`}
+                  >
+                    <div className="absolute -left-[13px] top-0 h-6 w-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center border-2 border-white dark:border-[#111823] shadow-md shrink-0">
                       {item.order}
                     </div>
 
-                    <div className="bg-[#0a0e14] border border-[#1e2a3a] rounded-xl p-3">
-                      <p className="text-xs font-bold text-white">{item.name}</p>
+                    <div className="bg-white dark:bg-[#0a0e14] border border-slate-200 dark:border-[#1e2a3a] rounded-xl p-3 shadow-xs">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white">{item.name}</p>
                       <div className="flex items-center gap-2 text-[10px] text-[#7d8da3] mt-1">
-                        <Clock className="h-3 w-3" />
-                        <span className="font-mono text-white">{item.timestamp}</span>
+                        <Clock className="h-3 w-3 text-slate-400" />
+                        <span className="font-mono text-slate-700 dark:text-white font-semibold">{item.timestamp}</span>
                       </div>
-                      <div className="flex items-center justify-between text-[10px] text-[#7d8da3] mt-2 pt-2 border-t border-[#1e2a3a]">
-                        <span>Confidence: <strong className="text-emerald-400">{item.confidence}</strong></span>
-                        <span>Speed: <strong className="text-white">{item.speed}</strong></span>
+                      <div className="flex items-center justify-between text-[10px] text-[#7d8da3] mt-2 pt-2 border-t border-slate-100 dark:border-[#1e2a3a]">
+                        <span>Confidence: <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{item.confidence}</strong></span>
+                        <span>Speed: <strong className="text-slate-800 dark:text-white font-bold">{item.speed}</strong></span>
                       </div>
                     </div>
                   </div>

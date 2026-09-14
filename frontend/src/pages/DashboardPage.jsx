@@ -31,6 +31,15 @@ const redIcon = createCustomIcon("#ef4444");
 
 // Real Google Maps & OpenStreetMap tile layers (No API key watermark, full HD Gujarat coverage)
 const GOOGLE_MAP_LAYERS = {
+  streets: {
+    id: "streets",
+    label: "Google Maps",
+    icon: "🗺️",
+    url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
+    attribution: "&copy; Google Maps",
+    maxZoom: 20,
+  },
   satellite: {
     id: "satellite",
     label: "Google Satellite",
@@ -38,24 +47,6 @@ const GOOGLE_MAP_LAYERS = {
     url: "https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
     subdomains: ["0", "1", "2", "3"],
     attribution: "&copy; Google Maps Satellite",
-    maxZoom: 20,
-  },
-  osm: {
-    id: "osm",
-    label: "OpenStreetMap",
-    icon: "🏙️",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    subdomains: ["a", "b", "c"],
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
-  },
-  streets: {
-    id: "streets",
-    label: "Google Roads",
-    icon: "🗺️",
-    url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
-    subdomains: ["0", "1", "2", "3"],
-    attribution: "&copy; Google Maps",
     maxZoom: 20,
   },
   terrain: {
@@ -67,13 +58,22 @@ const GOOGLE_MAP_LAYERS = {
     attribution: "&copy; Google Maps Terrain",
     maxZoom: 20,
   },
+  osm: {
+    id: "osm",
+    label: "OpenStreetMap",
+    icon: "🏙️",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    subdomains: ["a", "b", "c"],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  },
 };
 
 export default function DashboardPage({ setActivePage }) {
   const { t } = useLanguage();
   const [cameras, setCameras] = useState(INITIAL_CAMERAS);
   const [selectedCamera, setSelectedCamera] = useState(null);
-  const [mapType, setMapType] = useState("satellite"); // default: Google Satellite Hybrid
+  const [mapType, setMapType] = useState("streets"); // default: Google Maps
   const [stats, setStats] = useState({
     total: 30,
     live: 30,
@@ -110,7 +110,7 @@ export default function DashboardPage({ setActivePage }) {
     loadAlertCount();
   }, []);
 
-  const activeLayer = GOOGLE_MAP_LAYERS[mapType];
+  const activeLayer = GOOGLE_MAP_LAYERS[mapType] || GOOGLE_MAP_LAYERS.streets;
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0a0e14]">
