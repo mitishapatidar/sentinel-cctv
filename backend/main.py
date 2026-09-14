@@ -199,6 +199,22 @@ def get_camera_snapshot(cam_id: str):
         return FileResponse(fallback_path, media_type="image/jpeg")
     raise HTTPException(status_code=404, detail=f"Snapshot for {cam_id} not available")
 
+@app.get("/download/architecture-diagram")
+def download_architecture_diagram():
+    """Direct high-resolution 1920x1080 PNG download of SENTINEL workflow & architecture."""
+    png_path = Path(__file__).resolve().parent.parent / "docs" / "sentinel_architecture_workflow.png"
+    if png_path.exists():
+        return FileResponse(png_path, media_type="image/png", filename="sentinel_architecture_workflow.png")
+    raise HTTPException(status_code=404, detail="Diagram PNG not found")
+
+@app.get("/download/architecture-diagram-svg")
+def download_architecture_diagram_svg():
+    """Direct vector SVG download of SENTINEL workflow & architecture."""
+    svg_path = Path(__file__).resolve().parent.parent / "docs" / "sentinel_architecture_workflow.svg"
+    if svg_path.exists():
+        return FileResponse(svg_path, media_type="image/svg+xml", filename="sentinel_architecture_workflow.svg")
+    raise HTTPException(status_code=404, detail="Diagram SVG not found")
+
 FALLBACK_KEY = bytes.fromhex("a59c70f080134543ffade38733d40d4a")
 
 @app.get("/stream/enc.key")
