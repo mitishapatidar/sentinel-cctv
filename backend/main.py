@@ -83,11 +83,25 @@ manifest_cache = {}      # backward compatibility
 segment_cache = {}       # (cam_id, segment_file) -> (timestamp, bytes)
 
 def generate_live_manifest(cam_id: str, num_segments: int = 5) -> str:
-    """Generates an advancing live sliding-window HLS playlist without needing upstream manifest."""
-    total_segs = 7200
+    """Generates an advancing live sliding-window HLS playlist synchronized with real IST daylight."""
     now = time.time()
-    current_seq = int(now / 6.0) % (total_segs - num_segments)
+    # IST is UTC + 5:30 (19800 seconds)
+    ist_epoch = now + 19800
+    seconds_in_day = ist_epoch % 86400
+    hour_fraction = seconds_in_day / 3600.0
     
+    # 7200 total segments representing 12 hours of real Gujarat CCTV footage
+    # Night recordings: [0 .. 4500] (~9:00 PM to ~4:30 AM)
+    # Daylight recordings: [4500 .. 7190] (~4:30 AM to ~9:00 AM)
+    if 6.0 <= hour_fraction < 18.0:
+        # Daytime (6:00 AM to 6:00 PM IST) -> Maps to daylight segments
+        progress = (hour_fraction - 6.0) / 12.0
+        current_seq = int(4500 + progress * (7190 - 4500))
+    else:
+        # Nighttime (6:00 PM to 6:00 AM IST) -> Maps to night segments
+        progress = ((hour_fraction - 18.0) % 24.0) / 12.0
+        current_seq = int(progress * 4500)
+        
     lines = [
         "#EXTM3U",
         "#EXT-X-VERSION:6",
@@ -97,7 +111,7 @@ def generate_live_manifest(cam_id: str, num_segments: int = 5) -> str:
         '#EXT-X-KEY:METHOD=AES-128,URI="http://127.0.0.1:8000/stream/enc.key",IV=0x00000000000000000000000000000000',
     ]
     for i in range(num_segments):
-        seq = (current_seq + i) % total_segs
+        seq = (current_seq + i) % 7200
         lines.append("#EXTINF:6.000000,")
         lines.append(f"http://127.0.0.1:8000/stream/{cam_id}/seg{seq:05d}.ts")
         
