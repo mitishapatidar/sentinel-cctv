@@ -107,7 +107,7 @@ export default function Navbar({
         <div>
           {/* Top Line: Gujarati & English Police Department */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-blue-400 tracking-wide">
+            <span className="text-[12px] font-bold text-blue-400 tracking-wide">
               {t("policeDept")}
             </span>
           </div>
@@ -118,7 +118,7 @@ export default function Navbar({
           </h1>
 
           {/* Subtitle */}
-          <p className="text-[10px] text-[#7d8da3] tracking-wide hidden xl:block leading-none mt-0.5">
+          <p className="text-[11px] text-[#7d8da3] tracking-wide hidden xl:block leading-none mt-0.5">
             {t("projectSubtitle")}
           </p>
         </div>
@@ -141,7 +141,7 @@ export default function Navbar({
           {/* Dropdown Menu */}
           {langDropdownOpen && (
             <div className="officer-dropdown-menu absolute right-0 mt-2 w-48 rounded-xl bg-[#111823] border-2 border-black dark:border-[#1e2a3a] shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="px-2.5 py-1 text-[10px] font-bold text-[#5c6b86] uppercase tracking-wider border-b border-[#1e2a3a] mb-1">
+              <div className="px-2.5 py-1 text-[11px] font-bold text-[#5c6b86] uppercase tracking-wider border-b border-[#1e2a3a] mb-1">
                 Select Language
               </div>
               {languageOptions.map((opt) => {
@@ -190,7 +190,7 @@ export default function Navbar({
         >
           <Bell className="h-4 w-4" />
           {alertCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center animate-pulse">
+            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 rounded-full bg-red-500 text-[11px] font-bold text-white flex items-center justify-center animate-pulse">
               {alertCount}
             </span>
           )}
@@ -223,7 +223,7 @@ export default function Navbar({
               <p className="text-xs font-bold text-white tracking-wide truncate max-w-[130px]">
                 {user?.email ? user.email.split("@")[0] : t("officer")}
               </p>
-              <p className="text-[10px] font-medium text-blue-400 truncate max-w-[130px]">
+              <p className="text-[11px] font-medium text-blue-400 truncate max-w-[130px]">
                 {user?.role || t("adminRole")}
               </p>
             </div>
@@ -251,15 +251,15 @@ export default function Navbar({
                       </h4>
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
                     </div>
-                    <p className="text-[11px] text-[#7d8da3] truncate mt-0.5">{user?.email}</p>
+                    <p className="text-[12px] text-[#7d8da3] truncate mt-0.5">{user?.email}</p>
 
                     {/* Badge Number & Clearance Chip */}
                     <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400">
                         <Shield className="h-2.5 w-2.5" />
                         {user?.badgeId || "GP-CID-7809"}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">
                         <Award className="h-2.5 w-2.5" />
                         CLEARANCE LEVEL 4
                       </span>
@@ -268,13 +268,13 @@ export default function Navbar({
                 </div>
 
                 {/* Jurisdiction & 2FA Status */}
-                <div className="mt-3 pt-2.5 border-t border-[#1e2a3a] grid grid-cols-2 gap-2 text-[10px] text-[#7d8da3]">
+                <div className="mt-3 pt-2.5 border-t border-[#1e2a3a] grid grid-cols-2 gap-2 text-[11px] text-[#7d8da3]">
                   <div>
-                    <span className="block text-[9px] uppercase tracking-wider text-[#5c6b86]">Jurisdiction</span>
+                    <span className="block text-[10px] uppercase tracking-wider text-[#5c6b86]">Jurisdiction</span>
                     <span className="font-semibold text-gray-300 truncate block">Gujarat Police HQ</span>
                   </div>
                   <div>
-                    <span className="block text-[9px] uppercase tracking-wider text-[#5c6b86]">Session Security</span>
+                    <span className="block text-[10px] uppercase tracking-wider text-[#5c6b86]">Session Security</span>
                     <span className="font-semibold text-emerald-400 flex items-center gap-1">
                       <Lock className="h-2.5 w-2.5" /> CCTNS 2FA Active
                     </span>
@@ -284,7 +284,7 @@ export default function Navbar({
 
               {/* Role Switcher */}
               <div className="p-3 border-b border-[#1e2a3a]">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#5c6b86] mb-1.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5c6b86] mb-1.5">
                   Command Role Switcher
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -315,9 +315,9 @@ export default function Navbar({
 
               {/* Display Theme Switcher (White Mode / Dark Grid) */}
               <div className="p-3 border-b border-[#1e2a3a]">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#5c6b86] mb-1.5 flex items-center justify-between">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5c6b86] mb-1.5 flex items-center justify-between">
                   <span>Display Theme</span>
-                  <span className="text-[9px] font-mono font-bold text-blue-500 uppercase">
+                  <span className="text-[10px] font-mono font-bold text-blue-500 uppercase">
                     {theme === "light" ? "White Theme Active" : "Dark Theme Active"}
                   </span>
                 </div>
@@ -361,7 +361,7 @@ export default function Navbar({
                   <ShieldAlert className="h-4 w-4 text-blue-400 shrink-0" />
                   <div className="flex-1">
                     <span className="font-semibold block">Security & Audit Logs</span>
-                    <span className="text-[10px] text-[#7d8da3]">Track session and surveillance history</span>
+                    <span className="text-[11px] text-[#7d8da3]">Track session and surveillance history</span>
                   </div>
                 </button>
 
@@ -375,7 +375,7 @@ export default function Navbar({
                   <FileText className="h-4 w-4 text-amber-400 shrink-0" />
                   <div className="flex-1">
                     <span className="font-semibold block">Camera Registry & Nodes</span>
-                    <span className="text-[10px] text-[#7d8da3]">Review 30 statewide sensor endpoints</span>
+                    <span className="text-[11px] text-[#7d8da3]">Review 30 statewide sensor endpoints</span>
                   </div>
                 </button>
               </div>
@@ -384,7 +384,7 @@ export default function Navbar({
               <div className="p-2.5 border-t border-[#1e2a3a] bg-[#0d131c]">
                 {showLogoutConfirm ? (
                   <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-xl animate-in fade-in duration-150">
-                    <p className="text-[11px] text-red-300 font-semibold text-center mb-2">
+                    <p className="text-[12px] text-red-300 font-semibold text-center mb-2">
                       Exit Gujarat Police Command Grid?
                     </p>
                     <div className="flex items-center gap-2">

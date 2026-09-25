@@ -145,7 +145,7 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
               <span>{tab.label}</span>
               {tab.count > 0 && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                     filterStatus === tab.id
                       ? "bg-white/20 text-white"
                       : tab.id === "pending"
@@ -202,11 +202,11 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
                     <span className="font-mono text-xs font-bold text-blue-400">
                       {item.alert_code || `ALT-${item.id.toString().slice(0, 5)}`}
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded bg-[#0a0e14] border border-[#1e2a3a] text-white">
+                    <span className="text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded bg-[#0a0e14] border border-[#1e2a3a] text-white">
                       {item.alert_type || "Surveillance Match"}
                     </span>
                     <span
-                      className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
+                      className={`text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
                         item.severity === "critical"
                           ? "bg-red-500/20 text-red-400 border border-red-500/30"
                           : item.severity === "high"
@@ -217,7 +217,7 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
                       {item.severity || "high"}
                     </span>
                     <span
-                      className={`text-[10px] uppercase font-semibold ml-auto md:ml-0 px-2 py-0.5 rounded ${
+                      className={`text-[11px] uppercase font-semibold ml-auto md:ml-0 px-2 py-0.5 rounded ${
                         item.status === "pending"
                           ? "bg-amber-500/10 text-amber-400"
                           : item.status === "acknowledged"
@@ -235,13 +235,13 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
                     <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
                       {item.title}
                     </h3>
-                    <span className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity font-semibold flex items-center gap-0.5 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
+                    <span className="text-[11px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity font-semibold flex items-center gap-0.5 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
                       <Navigation className="h-2.5 w-2.5" /> Track Route ↗
                     </span>
                   </div>
                   <p className="text-xs text-[#7d8da3] mt-1 leading-relaxed">{item.message}</p>
 
-                  <div className="flex flex-wrap items-center gap-4 text-[11px] text-[#7d8da3] mt-3">
+                  <div className="flex flex-wrap items-center gap-4 text-[12px] text-[#7d8da3] mt-3">
                     <span className="flex items-center gap-1.5">
                       <MapPin className="h-3.5 w-3.5 text-blue-400" />
                       <strong className="text-white">{camName}</strong> ({camCity})

@@ -56,7 +56,7 @@ export default function LandingPage({ onEnterLogin }) {
           <div>
             {/* Top Line: Gujarati & English Police Department */}
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-blue-400 tracking-wide">
+              <span className="text-[12px] font-bold text-blue-400 tracking-wide">
                 ગુજરાત પોલીસ • GUJARAT POLICE
               </span>
             </div>
@@ -67,7 +67,7 @@ export default function LandingPage({ onEnterLogin }) {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-[10px] sm:text-[11px] text-[#7d8da3] tracking-wide leading-none mt-0.5 hidden sm:block">
+            <p className="text-[11px] sm:text-[12px] text-[#7d8da3] tracking-wide leading-none mt-0.5 hidden sm:block">
               Connecting 80,000 Heterogeneous Cameras across Municipal Corporations, Smart Cities, RTOs &amp; Police
             </p>
           </div>
@@ -181,7 +181,7 @@ export default function LandingPage({ onEnterLogin }) {
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 dark:border-[#1e2a3a]">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#5c6b86]">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#5c6b86]">
                     Key Coverage:
                   </p>
                   <p className="text-xs font-semibold text-slate-700 dark:text-[#cad5e2] mt-0.5">

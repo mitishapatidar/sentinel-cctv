@@ -112,7 +112,7 @@ export default function LoginPage({ onLoginSuccess, onBackHome }) {
           <div>
             {/* Top Line: Gujarati & English Police Department */}
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-blue-400 tracking-wide">
+              <span className="text-[12px] font-bold text-blue-400 tracking-wide">
                 ગુજરાત પોલીસ • GUJARAT POLICE
               </span>
             </div>
@@ -123,7 +123,7 @@ export default function LoginPage({ onLoginSuccess, onBackHome }) {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-[10px] sm:text-[11px] text-[#7d8da3] tracking-wide leading-none mt-0.5 hidden sm:block">
+            <p className="text-[11px] sm:text-[12px] text-[#7d8da3] tracking-wide leading-none mt-0.5 hidden sm:block">
               Connecting 80,000 Heterogeneous Cameras across Municipal Corporations, Smart Cities, RTOs &amp; Police
             </p>
           </div>
@@ -164,6 +164,7 @@ export default function LoginPage({ onLoginSuccess, onBackHome }) {
               key={tab.key}
               type="button"
               onClick={() => switchMode(tab.key)}
+              aria-pressed={mode === tab.key}
               className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
                 mode === tab.key
                   ? "bg-blue-600 text-white shadow-sm"
@@ -282,6 +283,8 @@ export default function LoginPage({ onLoginSuccess, onBackHome }) {
                       key={r.key}
                       type="button"
                       onClick={() => setRole(r.key)}
+                      aria-pressed={role === r.key}
+                      aria-label={`${r.key === "admin" ? "Admin" : "Operator"} role`}
                       className={`py-2 px-4 rounded-xl text-xs font-semibold border cursor-pointer transition-all flex items-center justify-center gap-2 ${
                         role === r.key
                           ? "bg-blue-600/20 border-blue-500 text-blue-400 font-bold shadow-sm"
@@ -325,7 +328,7 @@ export default function LoginPage({ onLoginSuccess, onBackHome }) {
             <ArrowRight className="h-4 w-4" />
           </button>
 
-          <p className="text-center text-[11px] text-[#7d8da3]">
+          <p className="text-center text-[12px] text-[#7d8da3]">
             {isSignUp ? "Already have an account? " : "New officer? "}
             <button
               type="button"
@@ -350,13 +353,13 @@ export default function LoginPage({ onLoginSuccess, onBackHome }) {
         </form>
 
         {/* Legal Notice Box */}
-        <div className="mt-5 p-3 rounded-xl bg-[#0a0e14] border border-[#1e2a3a] text-[10px] text-[#7d8da3] leading-relaxed">
+        <div className="mt-5 p-3 rounded-xl bg-[#0a0e14] border border-[#1e2a3a] text-[11px] text-[#7d8da3] leading-relaxed">
           ⚖️ <strong className="text-white">LEGAL NOTICE:</strong> Restricted to authorized enforcement personnel under IT Act 2000. All terminal interactions and telemetry lookups are digitally watermarked.
         </div>
       </div>
 
       {/* Page Footer */}
-      <footer className="text-center text-[11px] text-[#5c6b86] py-2">
+      <footer className="text-center text-[12px] text-[#5c6b86] py-2">
         © 2026 Home Department, Government of Gujarat. SENTINEL Unified Platform.
       </footer>
     </div>

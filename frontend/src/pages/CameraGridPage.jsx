@@ -1,15 +1,26 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, Radio, Maximize2, Shield, Eye, RefreshCw, Play, Tv } from "lucide-react";
-import { supabase } from "../supabaseClient";
 import HlsPlayer from "../components/HlsPlayer";
 import { auditService } from "../services/auditService";
-import { INITIAL_CAMERAS } from "../data/camerasData";
+import { useCameras } from "../hooks/useCameras";
+import { cameraService } from "../services/cameraService";
+
+// Tiles per page: keeps DOM size, image requests and concurrent streams bounded for any registry size
+const PAGE_SIZE = 24;
 
 export default function CameraGridPage() {
-  const [cameras, setCameras] = useState(INITIAL_CAMERAS);
+  const { cameras } = useCameras();
+  const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState("all");
-  const [viewMode, setViewMode] = useState("all"); // "all" | "hover"
+  // Hover-to-play by default: streaming all 30 feeds at once saturates bandwidth
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      return localStorage.getItem("sentinel_grid_mode") || "hover";
+    } catch (e) {
+      return "hover";
+    }
+  }); // "all" | "hover"
   const [hoveredCamId, setHoveredCamId] = useState(null);
   const [snapshotTimestamp, setSnapshotTimestamp] = useState(Date.now());
   const [activeCamModal, setActiveCamModal] = useState(null);
@@ -25,6 +36,40 @@ export default function CameraGridPage() {
     const istHour = (now.getUTCHours() + 5.5) % 24;
     const isDaytime = istHour >= 6 && istHour < 18;
     return isDaytime ? `/snapshots/day_${camId}.jpg` : `/snapshots/${camId}.jpg`;
+  };
+
+  // Backend grabs a fresh preview frame per camera; poll when each was last updated
+  const [snapshotMeta, setSnapshotMeta] = useState({});
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (!isLocal) return;
+    let lastSig = "";
+    const poll = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/cameras/snapshots/meta");
+        const meta = await res.json();
+        const sig = JSON.stringify(meta);
+        if (sig !== lastSig) {
+          lastSig = sig;
+          setSnapshotMeta(meta);
+          // Each image URL carries its own camera's update time, so only refreshed cameras reload
+        }
+      } catch (e) {
+        // Backend offline: archived previews stay in place
+      }
+      setNow(Date.now());
+    };
+    poll();
+    const interval = setInterval(poll, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const previewAge = (camId) => {
+    const updated = snapshotMeta[camId];
+    if (!updated) return null;
+    const mins = Math.max(0, Math.round((now - updated * 1000) / 60000));
+    return mins === 0 ? "just now" : `${mins}m ago`;
   };
 
   // Auto-refresh snapshot images every 3 minutes (180 seconds)
@@ -57,21 +102,6 @@ export default function CameraGridPage() {
     setHoveredCamId((prev) => (prev === camId ? null : prev));
   };
 
-  useEffect(() => {
-    // Try refreshing with real-time Supabase state if available
-    const fetchCameras = async () => {
-      try {
-        const { data } = await supabase.from("cameras").select("*");
-        if (data && data.length > 0) {
-          setCameras(data);
-        }
-      } catch (e) {
-        console.log("Using cached camera catalog:", e);
-      }
-    };
-    fetchCameras();
-  }, []);
-
   const filteredCameras = cameras.filter((c) => {
     const matchesSearch =
       (c.name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -80,6 +110,10 @@ export default function CameraGridPage() {
     const matchesDept = selectedDept === "all" || c.department === selectedDept;
     return matchesSearch && matchesDept;
   });
+
+  const pageCount = Math.max(1, Math.ceil(filteredCameras.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedCameras = filteredCameras.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
   const departments = [
     "all",
@@ -111,7 +145,10 @@ export default function CameraGridPage() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
               placeholder="Search camera or city..."
               className="bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-[#5c6b86] focus:outline-none focus:border-blue-500 w-44 transition-colors"
             />
@@ -119,7 +156,10 @@ export default function CameraGridPage() {
 
           <select
             value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
+            onChange={(e) => {
+              setSelectedDept(e.target.value);
+              setPage(0);
+            }}
             className="bg-[#0a0e14] border border-[#1e2a3a] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             {departments.map((dept) => (
@@ -137,15 +177,18 @@ export default function CameraGridPage() {
               onChange={(e) => {
                 setViewMode(e.target.value);
                 setHoveredCamId(null);
+                try {
+                  localStorage.setItem("sentinel_grid_mode", e.target.value);
+                } catch (err) {}
               }}
               className="bg-transparent text-xs text-white focus:outline-none cursor-pointer font-medium pr-1"
               title="Select Grid Streaming Mode"
             >
               <option value="all" className="bg-[#111823] text-white">
-                All live feeds (Default)
+                All live feeds (high bandwidth)
               </option>
               <option value="hover" className="bg-[#111823] text-white">
-                Hover to play
+                Hover to play (Recommended)
               </option>
             </select>
           </div>
@@ -155,7 +198,7 @@ export default function CameraGridPage() {
       {/* Grid Content */}
       <div className="p-6 flex-1">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredCameras.map((cam) => {
+          {pagedCameras.map((cam) => {
             const isLive = viewMode === "all" || hoveredCamId === cam.id;
             return (
               <div
@@ -176,11 +219,11 @@ export default function CameraGridPage() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     {isLive && (
-                      <span className="text-[9px] text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider">
+                      <span className="text-[10px] text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider">
                         LIVE
                       </span>
                     )}
-                    <span className="text-[10px] text-blue-400 font-medium px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                    <span className="text-[11px] text-blue-400 font-medium px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
                       {cam.city}
                     </span>
                   </div>
@@ -190,18 +233,24 @@ export default function CameraGridPage() {
                 <div className="relative aspect-video w-full bg-black overflow-hidden border-y border-black/20 dark:border-transparent">
                   {isLive ? (
                     <HlsPlayer
-                      streamUrl={cam.hls_url}
+                      streamUrl={cameraService.getStreamUrl(cam)}
                       cameraName={cam.name}
                       cameraId={cam.id}
                       hoverStartTime={hoverStartTimeRef.current}
-                      snapshotUrl={getSnapshotUrl(cam.id, snapshotTimestamp)}
+                      snapshotUrl={getSnapshotUrl(cam.id, snapshotMeta[cam.id] || snapshotTimestamp)}
                     />
                   ) : (
                     <div className="relative w-full h-full bg-[#0a0e14] flex items-center justify-center">
+                      <span className="absolute text-[12px] text-[#7d8da3]">No preview yet</span>
                       <img
-                        src={getSnapshotUrl(cam.id, snapshotTimestamp)}
+                        src={getSnapshotUrl(cam.id, snapshotMeta[cam.id] || snapshotTimestamp)}
                         alt={cam.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        decoding="async"
+                        className="relative w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onLoad={(e) => {
+                          e.target.style.visibility = "visible";
+                        }}
                         onError={(e) => {
                           const now = new Date();
                           const istHour = (now.getUTCHours() + 5.5) % 24;
@@ -211,14 +260,15 @@ export default function CameraGridPage() {
                             e.target.dataset.triedFallback = "true";
                             e.target.src = `/snapshots/${dayPrefix}${cam.id}.jpg`;
                           } else {
-                            e.target.src = isDaytime ? "/snapshots/day_cam01.jpg" : "/snapshots/cam01.jpg";
+                            // No image for this camera (e.g. newly registered): show the placeholder
+                            e.target.style.visibility = "hidden";
                           }
                         }}
                       />
                       {/* Snapshot Indicator Badge */}
-                      <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs border border-white/10 text-[10px] text-[#94a3b8] font-mono">
+                      <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs border border-white/10 text-[11px] text-[#94a3b8] font-mono">
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
-                        <span>SNAPSHOT (3m)</span>
+                        <span>{previewAge(cam.id) ? `PREVIEW • ${previewAge(cam.id)}` : "ARCHIVED PREVIEW"}</span>
                       </div>
 
                       {/* Hover Hint Overlay */}
@@ -248,10 +298,10 @@ export default function CameraGridPage() {
                   <p className="text-xs font-semibold text-white truncate" title={cam.name}>
                     {cam.name}
                   </p>
-                  <div className="flex items-center justify-between text-[10px] text-[#7d8da3] mt-1">
+                  <div className="flex items-center justify-between text-[11px] text-[#7d8da3] mt-1">
                     <span>{cam.department}</span>
                     <span className="font-mono text-[#5c6b86]">
-                      {isLive ? "1080p • H.264" : "Cached 3m"}
+                      {isLive ? "1080p • H.264" : previewAge(cam.id) ? `Updated ${previewAge(cam.id)}` : "Hover to play"}
                     </span>
                   </div>
                 </div>
@@ -259,6 +309,39 @@ export default function CameraGridPage() {
             );
           })}
         </div>
+
+        {filteredCameras.length === 0 && (
+          <p className="text-center text-sm text-[#7d8da3] py-16">No cameras match your search.</p>
+        )}
+
+        {/* Pagination */}
+        {pageCount > 1 && (
+          <div className="flex items-center justify-between gap-3 mt-6 text-xs text-[#7d8da3]">
+            <span>
+              Showing {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, filteredCameras.length)} of{" "}
+              {filteredCameras.length} cameras
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(currentPage - 1)}
+                disabled={currentPage === 0}
+                className="px-3 py-1.5 rounded-lg border border-[#1e2a3a] bg-[#111823] text-white disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="font-mono">
+                {currentPage + 1} / {pageCount}
+              </span>
+              <button
+                onClick={() => setPage(currentPage + 1)}
+                disabled={currentPage >= pageCount - 1}
+                className="px-3 py-1.5 rounded-lg border border-[#1e2a3a] bg-[#111823] text-white disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Fullscreen Video Modal */}
@@ -284,10 +367,10 @@ export default function CameraGridPage() {
             </div>
             <div className="aspect-video w-full bg-black">
               <HlsPlayer
-                streamUrl={activeCamModal.hls_url}
+                streamUrl={cameraService.getStreamUrl(activeCamModal)}
                 cameraName={activeCamModal.name}
                 cameraId={activeCamModal.id}
-                snapshotUrl={getSnapshotUrl(activeCamModal.id, snapshotTimestamp)}
+                snapshotUrl={getSnapshotUrl(activeCamModal.id, snapshotMeta[activeCamModal.id] || snapshotTimestamp)}
               />
             </div>
           </div>

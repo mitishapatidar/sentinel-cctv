@@ -91,7 +91,7 @@ const createNumberedIcon = (number, isAlert = false) => {
   });
 };
 
-export default function VehicleSearchPage({ initialPlate }) {
+export default function VehicleSearchPage({ initialPlate, onPlateSearched }) {
   const [query, setQuery] = useState(() => {
     try {
       return initialPlate || localStorage.getItem("sentinel_search_plate") || "GJ-01-AB-1234";
@@ -790,6 +790,7 @@ export default function VehicleSearchPage({ initialPlate }) {
     const target = (plateToSearch || query).trim().toUpperCase();
     setSearching(true);
     auditService.log("ANPR_SEARCH", `Vehicle Query: ${target}`, "CHAIN_OF_CUSTODY_SECURED");
+    if (onPlateSearched) onPlateSearched(target);
 
     try {
       // 1. Try querying real Supabase detections table
@@ -909,9 +910,11 @@ export default function VehicleSearchPage({ initialPlate }) {
               <Car className="absolute left-3.5 top-3 h-4 w-4 text-[#7d8da3]" />
               <input
                 type="text"
+                id="plate-search-input"
+                aria-label="Vehicle number plate"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Enter Number Plate (e.g. GJ-05-AB-1234)"
+                placeholder="Enter Number Plate (e.g. GJ-05-AB-1234)  •  Press / to focus"
                 className="w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white font-mono uppercase focus:outline-none focus:border-blue-500 tracking-wider transition-colors"
               />
             </div>
@@ -931,7 +934,7 @@ export default function VehicleSearchPage({ initialPlate }) {
               <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300">
                 Quick Surveillance Targets
               </span>
-              <span className="text-[10px] font-mono text-[#7d8da3]">
+              <span className="text-[11px] font-mono text-[#7d8da3]">
                 16 Hotlists • 4 Columns Systematic Grid
               </span>
             </div>
@@ -969,13 +972,13 @@ export default function VehicleSearchPage({ initialPlate }) {
                     setQuery(t.plate);
                     handleSearch(t.plate);
                   }}
-                  className="px-3 py-2 rounded-xl bg-white dark:bg-[#0d131c] border border-slate-200 dark:border-[#1e2a3a] hover:border-blue-500/70 hover:bg-blue-50/40 dark:hover:bg-blue-500/10 hover:shadow-xs cursor-pointer font-mono text-[11px] transition-all flex items-center justify-between gap-1.5 text-left group"
+                  className="px-3 py-2 rounded-xl bg-white dark:bg-[#0d131c] border border-slate-200 dark:border-[#1e2a3a] hover:border-blue-500/70 hover:bg-blue-50/40 dark:hover:bg-blue-500/10 hover:shadow-xs cursor-pointer font-mono text-[12px] transition-all flex items-center justify-between gap-1.5 text-left group"
                   title={`${t.plate} (${t.tag})`}
                 >
                   <span className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors truncate">
                     {t.plate}
                   </span>
-                  <span className={`text-[10px] font-sans font-semibold px-1.5 py-0.5 rounded border truncate shrink-0 ${t.badge}`}>
+                  <span className={`text-[11px] font-sans font-semibold px-1.5 py-0.5 rounded border truncate shrink-0 ${t.badge}`}>
                     {t.tag}
                   </span>
                 </button>
@@ -998,7 +1001,7 @@ export default function VehicleSearchPage({ initialPlate }) {
                 <div className="flex items-center gap-3">
                   <span className="text-xl font-extrabold font-mono text-white tracking-wider">{results.plate}</span>
                   {results.isWatchlist && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">
                       WATCHLIST MATCH
                     </span>
                   )}
@@ -1034,7 +1037,7 @@ export default function VehicleSearchPage({ initialPlate }) {
                       <button
                         key={layer.id}
                         onClick={() => setMapType(layer.id)}
-                        className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                        className={`flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                           mapType === layer.id
                             ? "bg-blue-600 text-white font-semibold shadow-sm"
                             : "text-[#7d8da3] hover:text-white hover:bg-[#16233b]"
@@ -1100,13 +1103,13 @@ export default function VehicleSearchPage({ initialPlate }) {
                         <div className="p-2.5 text-[#0a0e14] min-w-[180px]">
                           <div className="flex items-center justify-between border-b border-gray-200 pb-1 mb-1.5">
                             <span className="font-bold text-xs text-blue-700">Checkpoint #{step.order}</span>
-                            <span className="text-[9px] font-mono font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-mono font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
                               {step.camId}
                             </span>
                           </div>
                           <p className="font-bold text-xs text-gray-900">{step.name}</p>
-                          <p className="text-[10px] text-gray-600 mt-0.5">{step.city} • {step.timestamp}</p>
-                          <div className="flex items-center justify-between text-[10px] mt-1.5 pt-1 border-t border-gray-100 font-semibold">
+                          <p className="text-[11px] text-gray-600 mt-0.5">{step.city} • {step.timestamp}</p>
+                          <div className="flex items-center justify-between text-[11px] mt-1.5 pt-1 border-t border-gray-100 font-semibold">
                             <span className="text-emerald-700">Conf: {step.confidence}</span>
                             <span className="text-gray-800">Speed: {step.speed}</span>
                           </div>
@@ -1117,7 +1120,7 @@ export default function VehicleSearchPage({ initialPlate }) {
                 </MapContainer>
 
                 {/* Map Brand Badge */}
-                <div className="absolute bottom-2 left-2 z-[400] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-[10px] text-white/80 flex items-center gap-1.5 pointer-events-none">
+                <div className="absolute bottom-2 left-2 z-[400] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-[11px] text-white/80 flex items-center gap-1.5 pointer-events-none">
                   <span className="font-semibold text-white">{activeLayer.label}</span>
                   <span className="text-white/40">•</span>
                   <span>Gujarat State GIS</span>
@@ -1148,11 +1151,11 @@ export default function VehicleSearchPage({ initialPlate }) {
 
                     <div className="bg-white dark:bg-[#0a0e14] border border-slate-200 dark:border-[#1e2a3a] rounded-xl p-3 shadow-xs">
                       <p className="text-xs font-bold text-slate-900 dark:text-white">{item.name}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-[#7d8da3] mt-1">
+                      <div className="flex items-center gap-2 text-[11px] text-[#7d8da3] mt-1">
                         <Clock className="h-3 w-3 text-slate-400" />
                         <span className="font-mono text-slate-700 dark:text-white font-semibold">{item.timestamp}</span>
                       </div>
-                      <div className="flex items-center justify-between text-[10px] text-[#7d8da3] mt-2 pt-2 border-t border-slate-100 dark:border-[#1e2a3a]">
+                      <div className="flex items-center justify-between text-[11px] text-[#7d8da3] mt-2 pt-2 border-t border-slate-100 dark:border-[#1e2a3a]">
                         <span>Confidence: <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{item.confidence}</strong></span>
                         <span>Speed: <strong className="text-slate-800 dark:text-white font-bold">{item.speed}</strong></span>
                       </div>
@@ -1188,19 +1191,19 @@ export default function VehicleSearchPage({ initialPlate }) {
             {/* Target Profile */}
             <div className="my-6 grid grid-cols-2 gap-4 bg-gray-100 p-4 rounded-xl text-xs">
               <div>
-                <p className="text-gray-500 uppercase font-semibold text-[10px]">Registration Plate</p>
+                <p className="text-gray-500 uppercase font-semibold text-[11px]">Registration Plate</p>
                 <p className="text-base font-black font-mono text-blue-900">{results.plate}</p>
               </div>
               <div>
-                <p className="text-gray-500 uppercase font-semibold text-[10px]">Vehicle Classification</p>
+                <p className="text-gray-500 uppercase font-semibold text-[11px]">Vehicle Classification</p>
                 <p className="text-xs font-bold text-gray-900">{results.model}</p>
               </div>
               <div>
-                <p className="text-gray-500 uppercase font-semibold text-[10px]">Registry Status</p>
+                <p className="text-gray-500 uppercase font-semibold text-[11px]">Registry Status</p>
                 <p className="text-xs font-bold text-red-600">{results.category}</p>
               </div>
               <div>
-                <p className="text-gray-500 uppercase font-semibold text-[10px]">Total Checkpoints Correlated</p>
+                <p className="text-gray-500 uppercase font-semibold text-[11px]">Total Checkpoints Correlated</p>
                 <p className="text-xs font-bold text-gray-900">{results.totalSightings} Checkpoints</p>
               </div>
             </div>
@@ -1233,7 +1236,7 @@ export default function VehicleSearchPage({ initialPlate }) {
             </table>
 
             {/* Legal Certificate Footer */}
-            <div className="border-t pt-4 text-[10px] text-gray-500 space-y-1">
+            <div className="border-t pt-4 text-[11px] text-gray-500 space-y-1">
               <p>Certified that the electronic surveillance metadata above was ingested by the SENTINEL Centralised CCTV Gateway in real-time from active police roadside feeds. Cryptographic hash verified.</p>
               <p className="font-semibold text-gray-700">Digital Seal: SHA256:8f4c2e1b9a78d052a34... • Dy. Commissioner of Police (Crime)</p>
             </div>

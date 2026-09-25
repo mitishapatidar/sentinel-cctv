@@ -38,13 +38,13 @@ export default function AlertToastNotification({ onInspectAlert, onNewAlert }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-500 text-white">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-500 text-white">
                 CRITICAL MATCH
               </span>
               <span className="text-xs font-mono text-gray-400">{activeToast.alert_code || "ALT-ALERT"}</span>
             </div>
             <h4 className="text-xs font-bold text-white mt-1">{activeToast.title}</h4>
-            <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-2">{activeToast.message}</p>
+            <p className="text-[12px] text-gray-400 mt-0.5 line-clamp-2">{activeToast.message}</p>
           </div>
         </div>
 
@@ -57,13 +57,13 @@ export default function AlertToastNotification({ onInspectAlert, onNewAlert }) {
       </div>
 
       <div className="mt-3 pt-2 border-t border-[#1e2a3a] flex items-center justify-between">
-        <span className="text-[10px] text-emerald-400 font-semibold">Live Intercept Dispatched</span>
+        <span className="text-[11px] text-emerald-400 font-semibold">Live Intercept Dispatched</span>
         <button
           onClick={() => {
             if (onInspectAlert) onInspectAlert(activeToast);
             setActiveToast(null);
           }}
-          className="flex items-center gap-1 text-[11px] font-bold text-blue-400 hover:text-blue-300 cursor-pointer"
+          className="flex items-center gap-1 text-[12px] font-bold text-blue-400 hover:text-blue-300 cursor-pointer"
         >
           Inspect Feed <Eye className="h-3.5 w-3.5" />
         </button>

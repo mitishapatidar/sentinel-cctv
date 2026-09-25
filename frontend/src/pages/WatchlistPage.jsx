@@ -104,7 +104,7 @@ export default function WatchlistPage() {
 
           <form onSubmit={handleAddEntry} className="space-y-4 text-xs">
             <div>
-              <label className="block text-[#7d8da3] font-semibold mb-1 uppercase tracking-wider text-[10px]">
+              <label className="block text-[#7d8da3] font-semibold mb-1 uppercase tracking-wider text-[11px]">
                 {activeTab === "vehicle" ? "Number Plate (e.g. GJ-01-AB-1234)" : "Full Name / Suspect Tag"}
               </label>
               <input
@@ -118,7 +118,7 @@ export default function WatchlistPage() {
             </div>
 
             <div>
-              <label className="block text-[#7d8da3] font-semibold mb-1 uppercase tracking-wider text-[10px]">
+              <label className="block text-[#7d8da3] font-semibold mb-1 uppercase tracking-wider text-[11px]">
                 Classification Category
               </label>
               <select
@@ -135,7 +135,7 @@ export default function WatchlistPage() {
             </div>
 
             <div>
-              <label className="block text-[#7d8da3] font-semibold mb-1 uppercase tracking-wider text-[10px]">
+              <label className="block text-[#7d8da3] font-semibold mb-1 uppercase tracking-wider text-[11px]">
                 Case Details / Police Station FIR
               </label>
               <textarea
@@ -191,7 +191,7 @@ export default function WatchlistPage() {
                           {entry.identifier}
                         </span>
                         <span
-                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                          className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
                             badgeColors[entry.category] || badgeColors.suspicious
                           }`}
                         >
@@ -205,7 +205,7 @@ export default function WatchlistPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => toggleActive(entry.id, entry.is_active)}
-                      className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-all flex items-center gap-1.5 ${
+                      className={`text-[12px] font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-all flex items-center gap-1.5 ${
                         entry.is_active
                           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                           : "bg-[#0a0e14] text-[#7d8da3] border-[#1e2a3a]"

@@ -409,3 +409,30 @@ html.dark .logout-cancel-btn:hover {
   background-color: #374151 !important;
 }
 
+
+/* Visible keyboard focus for buttons, links and custom controls (inputs keep their border focus style) */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Light mode: hover states of dark-theme surfaces map to a soft slate highlight instead of near-black */
+html:not(.dark) .hover\:bg-\[\#111823\]:hover,
+html:not(.dark) .hover\:bg-\[\#131d2b\]:hover,
+html:not(.dark) .hover\:bg-\[\#162130\]:hover,
+html:not(.dark) .hover\:bg-\[\#16233b\]:hover,
+html:not(.dark) .hover\:bg-\[\#1a2436\]:hover,
+html:not(.dark) .hover\:bg-\[\#1c293d\]:hover,
+html:not(.dark) .hover\:bg-\[\#223049\]:hover,
+html:not(.dark) .hover\:bg-\[\#28384f\]:hover {
+  background-color: #eef2f7 !important;
+}
+
+html:not(.dark) .hover\:bg-\[\#16233b\]\/40:hover {
+  background-color: #f5f7fa !important;
+}
+
+html:not(.dark) .hover\:text-white:hover {
+  color: #0f172a !important;
+}

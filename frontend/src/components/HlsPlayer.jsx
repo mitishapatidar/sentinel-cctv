@@ -147,7 +147,7 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId, hoverStartT
       />
 
       {/* CCTV OSD Overlay (Top Left) */}
-      <div className="absolute top-2 left-2 z-10 flex items-center gap-2 px-2 py-1 rounded bg-black/75 backdrop-blur-xs text-[10px] font-mono text-white border border-white/10 shadow">
+      <div className="absolute top-2 left-2 z-10 flex items-center gap-2 px-2 py-1 rounded bg-black/75 backdrop-blur-xs text-[11px] font-mono text-white border border-white/10 shadow">
         <span
           className={`h-2 w-2 rounded-full ${
             frameRendered ? "bg-emerald-400 animate-pulse" : "bg-amber-400 animate-ping"
@@ -161,12 +161,12 @@ export default function HlsPlayer({ streamUrl, cameraName, cameraId, hoverStartT
       </div>
 
       {/* CCTV Live Timestamp Overlay (Top Right) */}
-      <div className="absolute top-2 right-2 z-10 px-2 py-1 rounded bg-black/75 backdrop-blur-xs text-[10px] font-mono text-white border border-white/10 shadow">
+      <div className="absolute top-2 right-2 z-10 px-2 py-1 rounded bg-black/75 backdrop-blur-xs text-[11px] font-mono text-white border border-white/10 shadow">
         <span>{timestamp} IST</span>
       </div>
 
       {/* Camera Location Tag (Bottom Left) */}
-      <div className="absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-mono text-gray-300 truncate max-w-[80%] shadow">
+      <div className="absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[10px] font-mono text-gray-300 truncate max-w-[80%] shadow">
         {cameraName}
       </div>
     </div>

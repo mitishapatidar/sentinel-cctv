@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import { Radio, Car, Bell, Shield, Video, Layers, AlertTriangle, Eye, CheckCircle2, Map as MapIcon, Globe } from "lucide-react";
-import { supabase } from "../supabaseClient";
 import HlsPlayer from "../components/HlsPlayer";
-import { INITIAL_CAMERAS } from "../data/camerasData";
+import { useCameras } from "../hooks/useCameras";
+import { cameraService } from "../services/cameraService";
 import gujaratBorder from "../data/gujaratBorder.json";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -71,7 +71,7 @@ const GOOGLE_MAP_LAYERS = {
 
 export default function DashboardPage({ setActivePage }) {
   const { t } = useLanguage();
-  const [cameras, setCameras] = useState(INITIAL_CAMERAS);
+  const { cameras } = useCameras();
   const [selectedCamera, setSelectedCamera] = useState(null);
   const [mapType, setMapType] = useState("streets"); // default: Google Maps
   const [stats, setStats] = useState({
@@ -82,21 +82,6 @@ export default function DashboardPage({ setActivePage }) {
   });
 
   useEffect(() => {
-    // Fetch real cameras from Supabase
-    const loadCameras = async () => {
-      try {
-        const { data, error } = await supabase.from("cameras").select("*");
-        if (!error && data && data.length > 0) {
-          setCameras(data);
-          setStats((prev) => ({ ...prev, total: data.length, live: data.length }));
-        } else {
-          setCameras(INITIAL_CAMERAS);
-        }
-      } catch (err) {
-        setCameras(INITIAL_CAMERAS);
-      }
-    };
-
     const loadAlertCount = async () => {
       try {
         const { data } = await alertService.getAlerts();
@@ -106,9 +91,13 @@ export default function DashboardPage({ setActivePage }) {
       } catch (e) {}
     };
 
-    loadCameras();
     loadAlertCount();
   }, []);
+
+  // Camera totals follow the live registry
+  useEffect(() => {
+    setStats((prev) => ({ ...prev, total: cameras.length, live: cameras.length }));
+  }, [cameras.length]);
 
   const activeLayer = GOOGLE_MAP_LAYERS[mapType] || GOOGLE_MAP_LAYERS.streets;
 
@@ -118,15 +107,15 @@ export default function DashboardPage({ setActivePage }) {
       <div className="border-b border-[#1e2a3a] px-5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#111823] shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="text-[11px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               Live GIS Command
             </span>
-            <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+            <span className="text-[11px] uppercase font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
               <Globe className="h-3 w-3" /> Real Google Maps Engine
             </span>
           </div>
           <h1 className="text-lg font-bold text-white tracking-wide">{t("commandDashboard")}</h1>
-          <p className="text-[11px] text-[#7d8da3]">{t("statewideSurveillance")}</p>
+          <p className="text-[12px] text-[#7d8da3]">{t("statewideSurveillance")}</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1e2a3a] bg-[#0a0e14] shadow-inner">
@@ -154,7 +143,7 @@ export default function DashboardPage({ setActivePage }) {
                   <button
                     key={layer.id}
                     onClick={() => setMapType(layer.id)}
-                    className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                       mapType === layer.id
                         ? "bg-blue-600 text-white font-semibold shadow-sm"
                         : "text-[#7d8da3] hover:text-white hover:bg-[#16233b]"
@@ -166,7 +155,7 @@ export default function DashboardPage({ setActivePage }) {
                 ))}
               </div>
 
-              <div className="hidden sm:flex items-center gap-2 text-[11px] text-[#7d8da3] pl-2 border-l border-[#1e2a3a]">
+              <div className="hidden sm:flex items-center gap-2 text-[12px] text-[#7d8da3] pl-2 border-l border-[#1e2a3a]">
                 <span className="flex items-center gap-1">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> {t("liveFeedsCount")}
                 </span>
@@ -218,12 +207,12 @@ export default function DashboardPage({ setActivePage }) {
                     <Popup className="custom-popup">
                       <div className="p-3 text-[#0a0e14] min-w-[200px]">
                         <div className="flex items-center justify-between border-b pb-1 mb-1">
-                          <span className="text-[10px] font-mono font-bold uppercase text-blue-700">{cam.id}</span>
-                          <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded">ONLINE</span>
+                          <span className="text-[11px] font-mono font-bold uppercase text-blue-700">{cam.id}</span>
+                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded">ONLINE</span>
                         </div>
                         <p className="font-bold text-xs text-gray-900 mt-1">{cam.name}</p>
-                        <p className="text-[10px] text-gray-600 mt-0.5">{cam.city} Range • {cam.department}</p>
-                        <p className="text-[9px] font-mono text-gray-500 mt-0.5">GPS: {lat.toFixed(4)}, {lng.toFixed(4)}</p>
+                        <p className="text-[11px] text-gray-600 mt-0.5">{cam.city} Range • {cam.department}</p>
+                        <p className="text-[10px] font-mono text-gray-500 mt-0.5">GPS: {lat.toFixed(4)}, {lng.toFixed(4)}</p>
                         <button
                           onClick={() => setSelectedCamera(cam)}
                           className="mt-2.5 w-full text-xs bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg font-semibold cursor-pointer transition-colors shadow-sm"
@@ -238,7 +227,7 @@ export default function DashboardPage({ setActivePage }) {
             </MapContainer>
 
             {/* Map Brand Badge */}
-            <div className="absolute bottom-2 left-2 z-[400] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-[10px] text-white/80 flex items-center gap-1.5 pointer-events-none">
+            <div className="absolute bottom-2 left-2 z-[400] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-[11px] text-white/80 flex items-center gap-1.5 pointer-events-none">
               <span className="font-semibold text-white">{activeLayer.label}</span>
               <span className="text-white/40">•</span>
               <span>Gujarat State GIS</span>
@@ -252,38 +241,38 @@ export default function DashboardPage({ setActivePage }) {
           <div className="grid grid-cols-2 gap-2 shrink-0">
             <div className="p-3 rounded-xl bg-[#111823] border border-[#1e2a3a]">
               <div className="flex items-center justify-between text-[#7d8da3] mb-1">
-                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">{t("totalCameras")}</span>
+                <span className="text-[11px] sm:text-[12px] uppercase tracking-wider font-semibold">{t("totalCameras")}</span>
                 <Radio className="h-3.5 w-3.5 text-blue-400" />
               </div>
               <p className="text-xl font-extrabold font-mono text-white leading-tight">{stats.total}</p>
-              <p className="text-[10px] text-[#7d8da3] mt-0.5">{t("govtOnboarded")}</p>
+              <p className="text-[11px] text-[#7d8da3] mt-0.5">{t("govtOnboarded")}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#111823] border border-emerald-500/30 bg-emerald-500/5">
               <div className="flex items-center justify-between text-[#7d8da3] mb-1">
-                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">{t("liveFeedsCount")}</span>
+                <span className="text-[11px] sm:text-[12px] uppercase tracking-wider font-semibold">{t("liveFeedsCount")}</span>
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
               </div>
               <p className="text-xl font-extrabold font-mono text-emerald-400 leading-tight">{stats.live}</p>
-              <p className="text-[10px] text-[#7d8da3] mt-0.5">{t("relayOperational")}</p>
+              <p className="text-[11px] text-[#7d8da3] mt-0.5">{t("relayOperational")}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#111823] border border-amber-500/30 bg-amber-500/5">
               <div className="flex items-center justify-between text-[#7d8da3] mb-1">
-                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">{t("alertsToday")}</span>
+                <span className="text-[11px] sm:text-[12px] uppercase tracking-wider font-semibold">{t("alertsToday")}</span>
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
               </div>
               <p className="text-xl font-extrabold font-mono text-amber-400 leading-tight">{stats.alertsToday}</p>
-              <p className="text-[10px] text-[#7d8da3] mt-0.5">{t("watchlistMatches")}</p>
+              <p className="text-[11px] text-[#7d8da3] mt-0.5">{t("watchlistMatches")}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#111823] border border-[#1e2a3a]">
               <div className="flex items-center justify-between text-[#7d8da3] mb-1">
-                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">{t("trackedPlates")}</span>
+                <span className="text-[11px] sm:text-[12px] uppercase tracking-wider font-semibold">{t("trackedPlates")}</span>
                 <Car className="h-3.5 w-3.5 text-blue-400" />
               </div>
               <p className="text-xl font-extrabold font-mono text-white leading-tight">{stats.vehiclesTracked}</p>
-              <p className="text-[10px] text-[#7d8da3] mt-0.5">{t("anprProcessed")}</p>
+              <p className="text-[11px] text-[#7d8da3] mt-0.5">{t("anprProcessed")}</p>
             </div>
           </div>
 
@@ -340,7 +329,7 @@ export default function DashboardPage({ setActivePage }) {
           <div className="p-2.5 rounded-xl border border-blue-500/30 bg-blue-600/10 flex items-center justify-between shrink-0">
             <div>
               <p className="text-xs font-semibold text-white">{t("inspectLiveFeeds")}</p>
-              <p className="text-[10px] text-[#7d8da3]">{t("switchMultiGrid")}</p>
+              <p className="text-[11px] text-[#7d8da3]">{t("switchMultiGrid")}</p>
             </div>
             <button
               onClick={() => setActivePage && setActivePage("cameras")}
@@ -359,7 +348,7 @@ export default function DashboardPage({ setActivePage }) {
             <div className="px-5 py-4 border-b border-black/20 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white">{selectedCamera.name}</h3>
-                <p className="text-[10px] text-[#7d8da3]">{selectedCamera.city} • {selectedCamera.department} • ID: {selectedCamera.id}</p>
+                <p className="text-[11px] text-[#7d8da3]">{selectedCamera.city} • {selectedCamera.department} • ID: {selectedCamera.id}</p>
               </div>
               <button
                 onClick={() => setSelectedCamera(null)}
@@ -370,7 +359,7 @@ export default function DashboardPage({ setActivePage }) {
             </div>
             <div className="h-80 w-full bg-black">
               <HlsPlayer
-                streamUrl={selectedCamera.hls_url}
+                streamUrl={cameraService.getStreamUrl(selectedCamera)}
                 cameraName={selectedCamera.name}
                 cameraId={selectedCamera.id}
               />

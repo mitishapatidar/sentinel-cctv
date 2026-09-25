@@ -3,41 +3,15 @@ import {
   Server, Search, Download, AlertCircle, CheckCircle2, RefreshCw, 
   Eye, Filter, MapPin, Shield, Cpu, Activity, ExternalLink, X, FileSpreadsheet
 } from "lucide-react";
-import { supabase } from "../supabaseClient";
-import { INITIAL_CAMERAS } from "../data/camerasData";
+import { useCameras } from "../hooks/useCameras";
 
 export default function RegistryPage({ setActivePage }) {
-  const [cameras, setCameras] = useState(INITIAL_CAMERAS);
+  // Live registry: cameras inserted/updated in Supabase appear here without a reload
+  const { cameras, loading } = useCameras();
   const [search, setSearch] = useState("");
   const [selectedCity, setSelectedCity] = useState("ALL");
   const [selectedDept, setSelectedDept] = useState("ALL");
-  const [loading, setLoading] = useState(false);
   const [activeModalCam, setActiveModalCam] = useState(null);
-
-  useEffect(() => {
-    const loadRegistry = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.from("cameras").select("*");
-        if (!error && data && data.length > 0) {
-          // Merge Supabase data with INITIAL_CAMERAS to preserve enriched fields
-          const merged = data.map((d) => {
-            const initial = INITIAL_CAMERAS.find((c) => c.id === d.id) || {};
-            return { ...initial, ...d };
-          });
-          setCameras(merged);
-        } else {
-          setCameras(INITIAL_CAMERAS);
-        }
-      } catch (err) {
-        console.warn("Falling back to local camera registry:", err);
-        setCameras(INITIAL_CAMERAS);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadRegistry();
-  }, []);
 
   // Filter list
   const cities = ["ALL", ...new Set(cameras.map((c) => c.city).filter(Boolean))];
@@ -106,10 +80,10 @@ export default function RegistryPage({ setActivePage }) {
       <div className="border-b border-[#1e2a3a] px-6 py-4 bg-[#111823] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            <span className="text-[11px] uppercase font-bold px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
               Model 1: Mandatory Asset Registry
             </span>
-            <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="text-[11px] uppercase font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               30 / 30 Online
             </span>
           </div>
@@ -154,7 +128,7 @@ export default function RegistryPage({ setActivePage }) {
             <Server className="h-4 w-4 text-blue-400" />
           </div>
           <p className="text-2xl font-bold text-white mt-2">{cameras.length}</p>
-          <span className="text-[11px] text-blue-400/80">30 Streams Configured</span>
+          <span className="text-[12px] text-blue-400/80">30 Streams Configured</span>
         </div>
 
         <div className="bg-[#111823] border border-[#1e2a3a] p-4 rounded-xl shadow-md">
@@ -163,7 +137,7 @@ export default function RegistryPage({ setActivePage }) {
             <Activity className="h-4 w-4 text-emerald-400" />
           </div>
           <p className="text-2xl font-bold text-emerald-400 mt-2">100%</p>
-          <span className="text-[11px] text-emerald-400/80">30/30 Feeds Live</span>
+          <span className="text-[12px] text-emerald-400/80">30/30 Feeds Live</span>
         </div>
 
         <div className="bg-[#111823] border border-[#1e2a3a] p-4 rounded-xl shadow-md">
@@ -172,7 +146,7 @@ export default function RegistryPage({ setActivePage }) {
             <MapPin className="h-4 w-4 text-amber-400" />
           </div>
           <p className="text-2xl font-bold text-white mt-2">{cities.length - 1}</p>
-          <span className="text-[11px] text-amber-400/80">Statewide Coverage</span>
+          <span className="text-[12px] text-amber-400/80">Statewide Coverage</span>
         </div>
 
         <div className="bg-[#111823] border border-[#1e2a3a] p-4 rounded-xl shadow-md">
@@ -181,7 +155,7 @@ export default function RegistryPage({ setActivePage }) {
             <Shield className="h-4 w-4 text-indigo-400" />
           </div>
           <p className="text-2xl font-bold text-indigo-400 mt-2">AES-128</p>
-          <span className="text-[11px] text-[#7d8da3]">H.264 High-Profile</span>
+          <span className="text-[12px] text-[#7d8da3]">H.264 High-Profile</span>
         </div>
       </div>
 
@@ -243,7 +217,7 @@ export default function RegistryPage({ setActivePage }) {
           <div className="bg-[#111823] border border-[#1e2a3a] rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#0d141f] text-[#7d8da3] uppercase tracking-wider text-[10px] border-b border-[#1e2a3a]">
+                <thead className="bg-[#0d141f] text-[#7d8da3] uppercase tracking-wider text-[11px] border-b border-[#1e2a3a]">
                   <tr>
                     <th className="px-4 py-3">Camera ID</th>
                     <th className="px-4 py-3">Asset Designation</th>
@@ -283,21 +257,21 @@ export default function RegistryPage({ setActivePage }) {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="px-2 py-0.5 rounded bg-[#0a0e14] border border-[#1e2a3a] text-white text-[11px]">
+                          <span className="px-2 py-0.5 rounded bg-[#0a0e14] border border-[#1e2a3a] text-white text-[12px]">
                             {cam.department}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-[#a0aec0]">
                           {cam.camera_type || "Fixed ANPR 4K"}
                         </td>
-                        <td className="px-4 py-3 font-mono text-[11px] text-[#7d8da3]">
+                        <td className="px-4 py-3 font-mono text-[12px] text-[#7d8da3]">
                           {cam.codec || "H.264"} • {cam.resolution || "1080p"}
                         </td>
-                        <td className="px-4 py-3 font-mono text-[11px] text-[#5c6b86]">
+                        <td className="px-4 py-3 font-mono text-[12px] text-[#5c6b86]">
                           {cam.ip_address || "10.24.1.100"}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                             Operational
                           </span>
@@ -329,7 +303,7 @@ export default function RegistryPage({ setActivePage }) {
             {/* Table Footer */}
             <div className="border-t border-[#1e2a3a] px-4 py-3 bg-[#0d141f] flex items-center justify-between text-xs text-[#7d8da3]">
               <span>Showing {filtered.length} of {cameras.length} registered CCTV assets</span>
-              <span className="font-mono text-[11px]">SCRB Gandhinagar • Model 1 Architecture</span>
+              <span className="font-mono text-[12px]">SCRB Gandhinagar • Model 1 Architecture</span>
             </div>
           </div>
         )}
@@ -357,7 +331,7 @@ export default function RegistryPage({ setActivePage }) {
                 <Cpu className="h-6 w-6" />
               </div>
               <div>
-                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
                   {activeModalCam.id}
                 </span>
                 <h3 className="text-base font-bold text-white mt-1">{activeModalCam.name}</h3>
@@ -367,23 +341,23 @@ export default function RegistryPage({ setActivePage }) {
 
             <div className="grid grid-cols-2 gap-3 text-xs mb-5">
               <div className="bg-[#0a0e14] p-3 rounded-xl border border-[#1e2a3a]">
-                <span className="text-[#7d8da3] block text-[10px] uppercase font-semibold">Hardware Type</span>
+                <span className="text-[#7d8da3] block text-[11px] uppercase font-semibold">Hardware Type</span>
                 <span className="text-white font-medium">{activeModalCam.camera_type || "Fixed ANPR 4K"}</span>
               </div>
               <div className="bg-[#0a0e14] p-3 rounded-xl border border-[#1e2a3a]">
-                <span className="text-[#7d8da3] block text-[10px] uppercase font-semibold">Encoding & FPS</span>
+                <span className="text-[#7d8da3] block text-[11px] uppercase font-semibold">Encoding & FPS</span>
                 <span className="text-white font-medium">{activeModalCam.codec || "H.264"} • {activeModalCam.resolution || "1080p @ 25fps"}</span>
               </div>
               <div className="bg-[#0a0e14] p-3 rounded-xl border border-[#1e2a3a]">
-                <span className="text-[#7d8da3] block text-[10px] uppercase font-semibold">Internal IP</span>
+                <span className="text-[#7d8da3] block text-[11px] uppercase font-semibold">Internal IP</span>
                 <span className="font-mono text-blue-400 font-medium">{activeModalCam.ip_address || "10.24.1.100"}</span>
               </div>
               <div className="bg-[#0a0e14] p-3 rounded-xl border border-[#1e2a3a]">
-                <span className="text-[#7d8da3] block text-[10px] uppercase font-semibold">AMC Provider</span>
+                <span className="text-[#7d8da3] block text-[11px] uppercase font-semibold">AMC Provider</span>
                 <span className="text-white font-medium">{activeModalCam.amc_vendor || "BEL SmartCity"}</span>
               </div>
               <div className="bg-[#0a0e14] p-3 rounded-xl border border-[#1e2a3a] col-span-2">
-                <span className="text-[#7d8da3] block text-[10px] uppercase font-semibold">GIS Coordinates</span>
+                <span className="text-[#7d8da3] block text-[11px] uppercase font-semibold">GIS Coordinates</span>
                 <span className="font-mono text-emerald-400 font-medium">
                   Lat: {activeModalCam.lat?.toFixed(4)}, Lng: {activeModalCam.lng?.toFixed(4)}
                 </span>
@@ -392,7 +366,7 @@ export default function RegistryPage({ setActivePage }) {
 
             <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl mb-5 flex items-start gap-2.5">
               <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div className="text-[11px] text-emerald-300">
+              <div className="text-[12px] text-emerald-300">
                 <span className="font-semibold">Section 65B Certified:</span> Tamper-proof RTSP stream with millisecond SHA-256 digital signature and PTS timestamp integrity.
               </div>
             </div>

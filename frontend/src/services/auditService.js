@@ -1,5 +1,7 @@
 import { supabase } from "./supabase";
 
+export const AUDIT_LOGGING_ENABLED = import.meta.env.VITE_AUDIT_LOGGING === "on";
+
 // Officer attached to every audit event; set on login, cleared on logout.
 let currentActor = { operator: "anonymous", role: null };
 
@@ -37,6 +39,8 @@ export const auditService = {
    * Records a security access or query event into the immutable audit trail.
    */
   async logEvent(eventData) {
+    // Paused during development to keep the table clean; set VITE_AUDIT_LOGGING=on to re-enable
+    if (!AUDIT_LOGGING_ENABLED) return { data: null, error: null };
     try {
       const { data, error } = await supabase
         .from("audit_logs")

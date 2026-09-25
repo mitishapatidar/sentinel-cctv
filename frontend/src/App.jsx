@@ -1,25 +1,55 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import DashboardPage from "./pages/DashboardPage";
-import CameraGridPage from "./pages/CameraGridPage";
-import VehicleSearchPage from "./pages/VehicleSearchPage";
-import WatchlistPage from "./pages/WatchlistPage";
-import AlertsPage from "./pages/AlertsPage";
-import RegistryPage from "./pages/RegistryPage";
-import AuditLogsPage from "./pages/AuditLogsPage";
 import AlertToastNotification from "./components/AlertToastNotification";
+import ToastHost from "./components/ToastHost";
+import CommandPalette from "./components/CommandPalette";
+import PageSkeleton from "./components/PageSkeleton";
 import { alertService } from "./services/alertService";
 import { authService } from "./services/authService";
 import { auditService } from "./services/auditService";
 import { INITIAL_ALERTS } from "./data/alertsData";
 
+// Command-grid pages load on demand so the landing and login screens open fast
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const CameraGridPage = lazy(() => import("./pages/CameraGridPage"));
+const VehicleSearchPage = lazy(() => import("./pages/VehicleSearchPage"));
+const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
+const AlertsPage = lazy(() => import("./pages/AlertsPage"));
+const RegistryPage = lazy(() => import("./pages/RegistryPage"));
+const AuditLogsPage = lazy(() => import("./pages/AuditLogsPage"));
+
+const APP_PAGES = ["dashboard", "cameras", "vehicle-search", "watchlist", "alerts", "registry", "audit-logs"];
+
+// URL <-> view mapping: "/" landing, "/login", "/<page>" and "/vehicle-search?plate=XX"
+function parseLocation() {
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  const plate = new URLSearchParams(window.location.search).get("plate");
+  if (path === "login") return { view: "login" };
+  if (APP_PAGES.includes(path)) return { view: "app", page: path, plate: plate ? plate.toUpperCase() : null };
+  return { view: "landing" };
+}
+
+function buildPath(view, page, plate) {
+  if (view === "login") return "/login";
+  if (view !== "app") return "/";
+  if (page === "vehicle-search" && plate) return `/vehicle-search?plate=${encodeURIComponent(plate)}`;
+  return `/${page}`;
+}
+
+const initialLocation = parseLocation();
+
 export default function App() {
-  const [view, setView] = useState("landing"); // "landing" | "login" | "forbidden" | "app"
-  const [activePage, setActivePage] = useState("dashboard");
+  // Deep links into the grid need a login first; remember where the officer was headed
+  const deepLinkRef = useRef(initialLocation.view === "app");
+  const [view, setView] = useState(initialLocation.view === "app" ? "login" : initialLocation.view); // "landing" | "login" | "forbidden" | "app"
+  const [activePage, setActivePage] = useState(initialLocation.page || "dashboard");
+  const [isAuthed, setIsAuthed] = useState(false);
+  const isAuthedRef = useRef(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
       const saved = localStorage.getItem("sentinel_sidebar_open");
@@ -38,12 +68,58 @@ export default function App() {
   });
 
   const [trackingPlate, setTrackingPlate] = useState(() => {
+    if (initialLocation.plate) return initialLocation.plate;
     try {
       return localStorage.getItem("sentinel_search_plate") || "GJ-01-AB-1234";
     } catch (e) {
       return "GJ-01-AB-1234";
     }
   });
+  // Plate shown in the URL; follows searches made inside the Vehicle Tracking page
+  const [urlPlate, setUrlPlate] = useState(initialLocation.plate);
+
+  useEffect(() => {
+    isAuthedRef.current = isAuthed;
+  }, [isAuthed]);
+
+  // Keep the address bar in sync so Back/Forward work and pages can be shared as links
+  // The first sync and login -> app replace the entry, so Back never returns to the login screen
+  const lastSyncedViewRef = useRef(null);
+  useEffect(() => {
+    if (view === "forbidden") return;
+    const target = buildPath(view, activePage, urlPlate);
+    const replace = lastSyncedViewRef.current === null || (lastSyncedViewRef.current === "login" && view === "app");
+    lastSyncedViewRef.current = view;
+    if (window.location.pathname + window.location.search !== target) {
+      window.history[replace ? "replaceState" : "pushState"](null, "", target);
+    }
+  }, [view, activePage, urlPlate]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const loc = parseLocation();
+      if (loc.view === "app") {
+        if (!isAuthedRef.current) {
+          deepLinkRef.current = true;
+          setActivePage(loc.page);
+          setView("login");
+          return;
+        }
+        setActivePage(loc.page);
+        if (loc.plate) {
+          setTrackingPlate(loc.plate);
+          setUrlPlate(loc.plate);
+        }
+        setView("app");
+      } else if (loc.view === "login" && isAuthedRef.current) {
+        setView("app");
+      } else {
+        setView(loc.view);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   const [alerts, setAlerts] = useState(INITIAL_ALERTS);
 
@@ -106,6 +182,7 @@ export default function App() {
     }
     if (plate) {
       setTrackingPlate(plate);
+      setUrlPlate(plate);
       try {
         localStorage.setItem("sentinel_search_plate", plate);
       } catch (e) {}
@@ -132,12 +209,38 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [sidebarOpen]);
 
-  // Optional keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar
+  const focusPlateSearch = () => {
+    setActivePage("vehicle-search");
+    // The page may still be loading; retry briefly until the input exists
+    let tries = 0;
+    const tick = () => {
+      const input = document.getElementById("plate-search-input");
+      if (input) {
+        input.focus();
+        input.select();
+      } else if (tries++ < 20) {
+        setTimeout(tick, 50);
+      }
+    };
+    tick();
+  };
+
+  // Keyboard shortcuts: Ctrl/Cmd+B sidebar, Ctrl/Cmd+K command palette, "/" plate search
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+      if (!isAuthedRef.current) return;
+      const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && key === "b") {
         e.preventDefault();
         toggleSidebar();
+      } else if ((e.ctrlKey || e.metaKey) && key === "k") {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+      } else if (key === "/" && !e.ctrlKey && !e.metaKey) {
+        const tag = (e.target.tagName || "").toLowerCase();
+        if (tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;
+        e.preventDefault();
+        focusPlateSearch();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -151,7 +254,11 @@ export default function App() {
       if (!cancelled && profile) {
         setUser(profile);
         auditService.setActor(profile);
-        setView((prev) => (prev === "landing" ? "app" : prev));
+        setIsAuthed(true);
+        isAuthedRef.current = true;
+        const cameFromDeepLink = deepLinkRef.current;
+        deepLinkRef.current = false;
+        setView((prev) => (prev === "landing" || (prev === "login" && cameFromDeepLink) ? "app" : prev));
       }
     });
     return () => {
@@ -163,19 +270,26 @@ export default function App() {
     setUser(userData);
     auditService.setActor(userData);
     auditService.log("CONTROL_ROOM_LOGIN", `Session started (${userData.badgeId || "—"}, ${userData.department || "—"})`, "VERIFIED");
+    setIsAuthed(true);
+    isAuthedRef.current = true;
     setView("app");
-    setActivePage("dashboard");
+    // Return to the page from a deep link, otherwise start at the dashboard
+    if (!deepLinkRef.current) setActivePage("dashboard");
+    deepLinkRef.current = false;
   };
 
   const handleLogout = async () => {
     await auditService.log("CONTROL_ROOM_LOGOUT", "Session ended", "VERIFIED");
     auditService.setActor(null);
     await authService.signOut();
+    setIsAuthed(false);
+    isAuthedRef.current = false;
+    setPaletteOpen(false);
     setView("landing");
   };
 
   if (view === "landing") {
-    return <LandingPage onEnterLogin={() => setView("login")} />;
+    return <LandingPage onEnterLogin={() => setView(isAuthed ? "app" : "login")} />;
   }
 
   if (view === "login") {
@@ -194,6 +308,14 @@ export default function App() {
   // Authenticated Command Grid
   return (
     <div className="h-screen w-screen bg-[#0a0e14] text-[#e6edf5] flex flex-col overflow-hidden relative">
+      <ToastHost />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onNavigate={(page) => setActivePage(page)}
+        onTrackPlate={handleTrackVehicle}
+      />
+
       {/* Realtime Floating Toast for Incoming Alerts */}
       <AlertToastNotification onInspectAlert={handleTrackVehicle} onNewAlert={fetchAlerts} />
 
@@ -228,13 +350,15 @@ export default function App() {
 
         {/* Page Content View - Dynamically expands when sidebar collapses */}
         <main className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
+          <Suspense fallback={<PageSkeleton />}>
           {activePage === "dashboard" && <DashboardPage setActivePage={setActivePage} />}
           {activePage === "cameras" && <CameraGridPage />}
-          {activePage === "vehicle-search" && <VehicleSearchPage initialPlate={trackingPlate} />}
+          {activePage === "vehicle-search" && <VehicleSearchPage initialPlate={trackingPlate} onPlateSearched={setUrlPlate} />}
           {activePage === "watchlist" && <WatchlistPage />}
           {activePage === "alerts" && <AlertsPage setActivePage={setActivePage} onTrackVehicle={handleTrackVehicle} />}
           {activePage === "registry" && <RegistryPage setActivePage={setActivePage} />}
           {activePage === "audit-logs" && <AuditLogsPage />}
+          </Suspense>
         </main>
       </div>
     </div>
