@@ -1049,7 +1049,7 @@ export default function VehicleSearchPage({ initialPlate, onPlateSearched }) {
                     ))}
                   </div>
 
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  <span className="text-xs text-emerald-700 dark:text-emerald-400 dark:text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                     {results.timeline.length} Checkpoints
                   </span>
                 </div>

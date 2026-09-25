@@ -190,7 +190,7 @@ export default function Navbar({
         >
           <Bell className="h-4 w-4" />
           {alertCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 rounded-full bg-red-500 text-[11px] font-bold text-white flex items-center justify-center animate-pulse">
+            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 rounded-full bg-red-600 text-[11px] font-bold text-white flex items-center justify-center animate-pulse">
               {alertCount}
             </span>
           )}

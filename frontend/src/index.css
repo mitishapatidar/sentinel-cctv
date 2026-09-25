@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* dark: utilities follow the in-app theme toggle (.dark on <html>), not the OS setting */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #0a0e14;
   --card: #111823;
@@ -316,10 +319,16 @@ html:not(.dark) .bg-red-500,
 html:not(.dark) .bg-red-500 *,
 html:not(.dark) .bg-emerald-600,
 html:not(.dark) .bg-emerald-600 *,
+html:not(.dark) .bg-emerald-700,
+html:not(.dark) .bg-emerald-700 *,
 html:not(.dark) .bg-amber-600,
 html:not(.dark) .bg-amber-600 *,
 html:not(.dark) .bg-black,
 html:not(.dark) .bg-black *,
+html:not(.dark) .bg-black\/60,
+html:not(.dark) .bg-black\/60 *,
+html:not(.dark) .bg-black\/70,
+html:not(.dark) .bg-black\/70 *,
 html:not(.dark) .bg-gradient-to-br.from-blue-600,
 html:not(.dark) .bg-gradient-to-br.from-blue-600 *,
 html:not(.dark) .bg-gradient-to-r.from-blue-600,
@@ -437,4 +446,14 @@ html:not(.dark) .hover\:bg-\[\#16233b\]\/40:hover {
 
 html:not(.dark) .hover\:text-white:hover {
   color: #0f172a !important;
+}
+
+/* Light mode: dimmed white text (e.g. the "—" in the header) would vanish on white */
+html:not(.dark) .text-white\/60 {
+  color: #64748b !important;
+}
+
+/* Light mode: placeholder text inside black video boxes stays readable */
+html:not(.dark) .snapshot-placeholder {
+  color: #64748b !important;
 }

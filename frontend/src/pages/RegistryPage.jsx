@@ -125,7 +125,7 @@ export default function RegistryPage({ setActivePage }) {
             <Server className="h-4 w-4 text-blue-400" />
           </div>
           <p className="text-2xl font-bold text-white mt-2">{cameras.length}</p>
-          <span className="text-[12px] text-blue-400/80">30 Streams Configured</span>
+          <span className="text-[12px] text-blue-600 dark:text-blue-400">30 Streams Configured</span>
         </div>
 
         <div className="bg-[#111823] border border-[#1e2a3a] p-4 rounded-xl shadow-md">
@@ -134,7 +134,7 @@ export default function RegistryPage({ setActivePage }) {
             <Activity className="h-4 w-4 text-emerald-400" />
           </div>
           <p className="text-2xl font-bold text-emerald-400 mt-2">100%</p>
-          <span className="text-[12px] text-emerald-400/80">30/30 Feeds Live</span>
+          <span className="text-[12px] text-emerald-700 dark:text-emerald-400">30/30 Feeds Live</span>
         </div>
 
         <div className="bg-[#111823] border border-[#1e2a3a] p-4 rounded-xl shadow-md">
@@ -143,7 +143,7 @@ export default function RegistryPage({ setActivePage }) {
             <MapPin className="h-4 w-4 text-amber-400" />
           </div>
           <p className="text-2xl font-bold text-white mt-2">{cities.length - 1}</p>
-          <span className="text-[12px] text-amber-400/80">Statewide Coverage</span>
+          <span className="text-[12px] text-amber-700 dark:text-amber-400">Statewide Coverage</span>
         </div>
 
         <div className="bg-[#111823] border border-[#1e2a3a] p-4 rounded-xl shadow-md">
@@ -258,13 +258,13 @@ export default function RegistryPage({ setActivePage }) {
                             {cam.department}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[#a0aec0]">
+                        <td className="px-4 py-3 text-[#7d8da3]">
                           {cam.camera_type || "Fixed ANPR 4K"}
                         </td>
                         <td className="px-4 py-3 font-mono text-[12px] text-[#7d8da3]">
                           {cam.codec || "H.264"} • {cam.resolution || "1080p"}
                         </td>
-                        <td className="px-4 py-3 font-mono text-[12px] text-[#5c6b86]">
+                        <td className="px-4 py-3 font-mono text-[12px] text-[#7d8da3]">
                           {cam.ip_address || "10.24.1.100"}
                         </td>
                         <td className="px-4 py-3">

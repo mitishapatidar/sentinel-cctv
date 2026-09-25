@@ -147,12 +147,12 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
                 <span
                   className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                     filterStatus === tab.id
-                      ? "bg-white/20 text-white"
+                      ? "bg-black/20 text-white"
                       : tab.id === "pending"
                       ? "bg-red-500/20 text-red-400"
                       : tab.id === "archived"
                       ? "bg-purple-500/20 text-purple-400"
-                      : "bg-[#1e2a3a] text-[#7d8da3]"
+                      : "bg-[#1e2a3a] text-[#cad5e2]"
                   }`}
                 >
                   {tab.count}
@@ -314,7 +314,7 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
                             e.stopPropagation();
                             handleUpdateStatus(item.id, "resolved");
                           }}
-                          className="flex items-center gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-600/20"
+                          className="flex items-center gap-1.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-600/20"
                         >
                           <Check className="h-3.5 w-3.5" />
                           Mark Resolved

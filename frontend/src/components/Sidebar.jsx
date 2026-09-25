@@ -46,7 +46,7 @@ export default function Sidebar({ activePage, setActivePage, isOpen = true, onTo
               >
                 <Menu className="h-4 w-4" />
               </button>
-              <span className="text-[12px] font-bold uppercase tracking-widest text-[#5c6b86] truncate">
+              <span className="text-[12px] font-bold uppercase tracking-widest text-[#7d8da3] truncate">
                 {t("operationsMenu")}
               </span>
             </div>

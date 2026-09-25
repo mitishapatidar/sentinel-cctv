@@ -241,7 +241,7 @@ export default function CameraGridPage() {
                     />
                   ) : (
                     <div className="relative w-full h-full bg-[#0a0e14] flex items-center justify-center">
-                      <span className="absolute text-[12px] text-[#7d8da3]">No preview yet</span>
+                      <span className="snapshot-placeholder absolute text-[12px] text-[#7d8da3]">No preview yet</span>
                       <img
                         src={getSnapshotUrl(cam.id, snapshotMeta[cam.id] || snapshotTimestamp)}
                         alt={cam.name}
@@ -300,7 +300,7 @@ export default function CameraGridPage() {
                   </p>
                   <div className="flex items-center justify-between text-[11px] text-[#7d8da3] mt-1">
                     <span>{cam.department}</span>
-                    <span className="font-mono text-[#5c6b86]">
+                    <span className="font-mono text-[#7d8da3]">
                       {isLive ? "1080p • H.264" : previewAge(cam.id) ? `Updated ${previewAge(cam.id)}` : "Hover to play"}
                     </span>
                   </div>
