@@ -60,8 +60,11 @@ def login_to_cctv():
             return True
         try:
             login_url = "https://cctv.corp8.cloud/auth/login"
-            cctv_email = os.getenv("CCTV_GATEWAY_EMAIL", "patidarmitisha@gmail.com")
-            cctv_pwd = os.getenv("CCTV_GATEWAY_PASSWORD", "NYJF-T8U3-MHP8")
+            cctv_email = os.getenv("CCTV_GATEWAY_EMAIL")
+            cctv_pwd = os.getenv("CCTV_GATEWAY_PASSWORD")
+            if not cctv_email or not cctv_pwd:
+                print("[Relay] CCTV_GATEWAY_EMAIL / CCTV_GATEWAY_PASSWORD not set in .env")
+                return False
             session.get(login_url, timeout=10)
             res = session.post(
                 login_url, 
