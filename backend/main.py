@@ -1,4 +1,7 @@
 import os
+import re
+from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 import json
 import urllib.request
 import urllib.parse
@@ -87,7 +90,33 @@ def login_to_cctv():
 cached_enc_key = None
 raw_manifest_cache = {}  # cam_id -> (timestamp, raw_text)
 manifest_cache = {}      # backward compatibility
-segment_cache = {}       # (cam_id, segment_file) -> (timestamp, bytes)
+# LRU cache bounded by total bytes, so memory stays flat no matter how many cameras are streamed
+segment_cache = OrderedDict()  # (cam_id, segment_file) -> (timestamp, bytes)
+SEGMENT_CACHE_MAX_BYTES = 150 * 1024 * 1024
+segment_cache_bytes = 0
+segment_cache_lock = threading.Lock()
+
+
+def cache_segment(key, data: bytes):
+    global segment_cache_bytes
+    with segment_cache_lock:
+        old = segment_cache.pop(key, None)
+        if old:
+            segment_cache_bytes -= len(old[1])
+        segment_cache[key] = (time.time(), data)
+        segment_cache_bytes += len(data)
+        while segment_cache_bytes > SEGMENT_CACHE_MAX_BYTES and segment_cache:
+            _, (_, evicted) = segment_cache.popitem(last=False)
+            segment_cache_bytes -= len(evicted)
+
+
+CAM_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
+SEGMENT_PATTERN = re.compile(r"^seg\d{5}\.ts$")
+
+
+def validate_cam_id(cam_id: str):
+    if not CAM_ID_PATTERN.match(cam_id):
+        raise HTTPException(status_code=400, detail="Invalid camera id")
 
 CAMERA_RANGES = {
     "cam01": (7200, 5500, 7190),
@@ -122,23 +151,72 @@ CAMERA_RANGES = {
     "cam30": (1919, 1100, 1910),
 }
 
-def generate_live_manifest(cam_id: str, num_segments: int = 5) -> str:
-    """Generates an advancing live sliding-window HLS playlist synchronized with real IST daylight per camera."""
-    now = time.time()
-    ist_epoch = now + 19800
-    seconds_in_day = ist_epoch % 86400
-    hour_fraction = seconds_in_day / 3600.0
-    
-    total_segs, day_start, day_end = CAMERA_RANGES.get(cam_id, (7200, 5500, 7190))
+# Cameras added after launch are not in CAMERA_RANGES; their segment count is read from the
+# gateway's VOD playlist once an hour. Unknown/offline cameras are cached as 0 to avoid hammering.
+discovered_segments = {}  # cam_id -> (checked_at, total_segments)
+DISCOVERY_TTL_SEC = 3600
+DISCOVERY_MAX_ENTRIES = 5000
+
+
+def discover_segment_count(cam_id: str) -> int:
+    cached = discovered_segments.get(cam_id)
+    if cached and time.time() - cached[0] < DISCOVERY_TTL_SEC:
+        return cached[1]
+    total = 0
+    try:
+        if login_to_cctv():
+            res = session.get(
+                f"https://cctv.corp8.cloud/{cam_id}/index.m3u8",
+                headers={"Referer": "https://cctv.corp8.cloud/"},
+                timeout=8,
+            )
+            if res.status_code == 200 and res.text.startswith("#EXTM3U"):
+                total = sum(1 for line in res.text.splitlines() if line.strip().endswith(".ts"))
+    except Exception as e:
+        print(f"[Relay] Playlist discovery failed for {cam_id}:", e)
+    if len(discovered_segments) >= DISCOVERY_MAX_ENTRIES:
+        discovered_segments.clear()
+    discovered_segments[cam_id] = (time.time(), total)
+    return total
+
+
+def camera_range(cam_id: str):
+    """(total_segments, day_start, day_end) or None when the camera has no recording on the gateway."""
+    if cam_id in CAMERA_RANGES:
+        return CAMERA_RANGES[cam_id]
+    total = discover_segment_count(cam_id)
+    return (total, None, None) if total else None
+
+
+def current_segment_seq(cam_id: str):
+    """Maps the current IST time of day onto this camera's recorded segment sequence (None if unavailable)."""
+    ist_epoch = time.time() + 19800
+    hour_fraction = (ist_epoch % 86400) / 3600.0
+
+    rng = camera_range(cam_id)
+    if rng is None:
+        return None
+    total_segs, day_start, day_end = rng
+    if day_start is None:
+        # Newly discovered camera: spread its recording evenly across the 24h day
+        return int(hour_fraction / 24.0 * total_segs) % total_segs
     if 6.0 <= hour_fraction < 18.0:
         # Daytime: maps cleanly into THIS camera's real daytime recording
         progress = (hour_fraction - 6.0) / 12.0
-        current_seq = int(day_start + progress * (day_end - day_start))
-    else:
-        # Nighttime: maps cleanly into THIS camera's real nighttime recording
-        progress = ((hour_fraction - 18.0) % 24.0) / 12.0
-        current_seq = int(progress * day_start)
-        
+        return int(day_start + progress * (day_end - day_start))
+    # Nighttime: maps cleanly into THIS camera's real nighttime recording
+    progress = ((hour_fraction - 18.0) % 24.0) / 12.0
+    return int(progress * day_start)
+
+
+def generate_live_manifest(cam_id: str, num_segments: int = 5) -> str:
+    """Generates an advancing live sliding-window HLS playlist synchronized with real IST daylight per camera."""
+    rng = camera_range(cam_id)
+    if rng is None:
+        return None
+    total_segs = rng[0]
+    current_seq = current_segment_seq(cam_id)
+
     lines = [
         "#EXTM3U",
         "#EXT-X-VERSION:6",
@@ -170,9 +248,89 @@ def health():
         "cached_segments": len(segment_cache)
     }
 
+# Preview snapshots: a frame grabbed from the segment currently playing for each camera,
+# refreshed in the background at most every SNAPSHOT_REFRESH_SEC.
+SNAPSHOT_REFRESH_SEC = 300
+snapshot_updated_at = {}  # cam_id -> epoch seconds of the last successful grab
+snapshot_attempted_at = {}  # cam_id -> epoch seconds of the last attempt (success or not)
+snapshot_inflight = set()
+snapshot_lock = threading.Lock()
+# Grabbing many cameras at once trips the gateway's rate limit; a small fixed pool keeps
+# thread count constant regardless of camera count
+snapshot_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="snapshot")
+SNAPSHOT_RETRY_SEC = 60
+
+
+def refresh_snapshot(cam_id: str):
+    tmp_ts = SNAPSHOTS_DIR / f".{cam_id}.ts"
+    tmp_jpg = SNAPSHOTS_DIR / f".{cam_id}.jpg"
+    try:
+        import cv2
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+        if time.time() < upstream_blocked_until or not login_to_cctv():
+            return
+        seq = current_segment_seq(cam_id)
+        if seq is None:
+            return
+        res = session.get(
+            f"https://cctv.corp8.cloud/{cam_id}/seg{seq:05d}.ts",
+            headers={"Referer": "https://cctv.corp8.cloud/"},
+            timeout=10,
+        )
+        data = res.content
+        if res.status_code != 200 or len(data) < 1000 or data.lstrip()[:1] == b"<":
+            return
+        # Segments are AES-128-CBC encrypted with a zero IV (see the manifest's EXT-X-KEY)
+        decryptor = Cipher(algorithms.AES(FALLBACK_KEY), modes.CBC(bytes(16))).decryptor()
+        usable = len(data) - len(data) % 16
+        tmp_ts.write_bytes(decryptor.update(data[:usable]) + decryptor.finalize())
+
+        cap = cv2.VideoCapture(str(tmp_ts))
+        ok, frame = cap.read()
+        cap.release()
+        if ok and frame is not None:
+            cv2.imwrite(str(tmp_jpg), frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            os.replace(tmp_jpg, SNAPSHOTS_DIR / f"live_{cam_id}.jpg")
+            snapshot_updated_at[cam_id] = time.time()
+    except Exception as e:
+        print(f"[Snapshot] Refresh failed for {cam_id}:", e)
+    finally:
+        tmp_ts.unlink(missing_ok=True)
+        tmp_jpg.unlink(missing_ok=True)
+        with snapshot_lock:
+            snapshot_inflight.discard(cam_id)
+
+
+def schedule_snapshot_refresh(cam_id: str):
+    now = time.time()
+    if now - snapshot_updated_at.get(cam_id, 0) < SNAPSHOT_REFRESH_SEC:
+        return
+    if now - snapshot_attempted_at.get(cam_id, 0) < SNAPSHOT_RETRY_SEC:
+        return
+    with snapshot_lock:
+        if cam_id in snapshot_inflight:
+            return
+        snapshot_inflight.add(cam_id)
+        snapshot_attempted_at[cam_id] = now
+    snapshot_executor.submit(refresh_snapshot, cam_id)
+
+
+@app.get("/api/cameras/snapshots/meta")
+def get_snapshot_meta():
+    """Epoch seconds of each camera's last fresh preview frame (cameras without one are omitted)."""
+    return snapshot_updated_at
+
+
 @app.get("/api/cameras/{cam_id}/snapshot")
 def get_camera_snapshot(cam_id: str):
-    """Returns the latest cached snapshot for the requested camera ID synchronized with IST daylight."""
+    """Returns the freshest preview frame for the camera, falling back to archived snapshots."""
+    validate_cam_id(cam_id)
+    schedule_snapshot_refresh(cam_id)
+    live_path = SNAPSHOTS_DIR / f"live_{cam_id}.jpg"
+    if cam_id in snapshot_updated_at and live_path.exists():
+        return FileResponse(live_path, media_type="image/jpeg", headers={"Cache-Control": "no-cache"})
+
     now = time.time()
     ist_epoch = now + 19800
     hour_fraction = (ist_epoch % 86400) / 3600.0
@@ -194,12 +352,8 @@ def get_camera_snapshot(cam_id: str):
             media_type="image/jpeg",
             headers={"Cache-Control": "public, max-age=180"}
         )
-    day_fallback = SNAPSHOTS_DIR / "day_cam01.jpg"
-    if day_fallback.exists():
-        return FileResponse(day_fallback, media_type="image/jpeg")
-    fallback_path = SNAPSHOTS_DIR / "cam01.jpg"
-    if fallback_path.exists():
-        return FileResponse(fallback_path, media_type="image/jpeg")
+    # No preview yet for this camera (e.g. just registered): let the UI show a placeholder
+    # instead of another camera's image
     raise HTTPException(status_code=404, detail=f"Snapshot for {cam_id} not available")
 
 @app.get("/download/architecture-diagram")
@@ -232,7 +386,10 @@ def get_encryption_key():
 @app.get("/stream/{cam_id}/index.m3u8")
 def get_hls_manifest(cam_id: str):
     """Returns compact live sliding-window manifest dynamically on every poll (<1ms)."""
+    validate_cam_id(cam_id)
     manifest_text = generate_live_manifest(cam_id, num_segments=5)
+    if manifest_text is None:
+        raise HTTPException(status_code=404, detail="No stream available for this camera")
     return Response(
         content=manifest_text, 
         media_type="application/vnd.apple.mpegurl",
@@ -247,10 +404,14 @@ def get_hls_manifest(cam_id: str):
 def get_hls_segment(cam_id: str, segment_file: str):
     """Proxies TS video segments with in-memory caching and fallback for instant playback."""
     global upstream_blocked_until
+    validate_cam_id(cam_id)
+    if not SEGMENT_PATTERN.match(segment_file):
+        raise HTTPException(status_code=400, detail="Invalid segment name")
     cache_key = (cam_id, segment_file)
     now = time.time()
-    if cache_key in segment_cache:
-        cached_time, cached_bytes = segment_cache[cache_key]
+    cached = segment_cache.get(cache_key)
+    if cached:
+        cached_time, cached_bytes = cached
         if now - cached_time < 600 and len(cached_bytes) > 1000 and not cached_bytes.startswith(b"<!doctype"):
             return Response(
                 content=cached_bytes, 
@@ -260,13 +421,11 @@ def get_hls_segment(cam_id: str, segment_file: str):
     
     # Helper to serve local encrypted MPEG-TS segment when upstream is in cooldown/unavailable
     def serve_fallback_segment():
+        # Only this camera's own cached clip; never substitute another camera's footage
         local_ts = CACHE_TS_DIR / f"{cam_id}.ts"
-        if not local_ts.exists():
-            local_ts = CACHE_TS_DIR / "cam01.ts"
         if local_ts.exists():
             with open(local_ts, "rb") as f:
                 data = f.read()
-            segment_cache[cache_key] = (now, data)
             return Response(
                 content=data, 
                 media_type="video/MP2T",
@@ -284,10 +443,7 @@ def get_hls_segment(cam_id: str, segment_file: str):
         res = session.get(target_url, timeout=8)
         seg_bytes = res.content
         if res.status_code == 200 and not seg_bytes.startswith(b"<!doctype") and b"watch time limit" not in seg_bytes:
-            if len(segment_cache) > 200:
-                oldest_key = min(segment_cache.keys(), key=lambda k: segment_cache[k][0])
-                del segment_cache[oldest_key]
-            segment_cache[cache_key] = (now, seg_bytes)
+            cache_segment(cache_key, seg_bytes)
             return Response(
                 content=seg_bytes, 
                 media_type="video/MP2T",

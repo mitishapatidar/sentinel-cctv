@@ -21,3 +21,6 @@ ai_pipeline/dataset/**/*
 runs/
 *.pt
 *.onnx
+
+# Generated camera preview frames
+backend/snapshots/live_*.jpg
