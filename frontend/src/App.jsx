@@ -13,6 +13,7 @@ import RegistryPage from "./pages/RegistryPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import AlertToastNotification from "./components/AlertToastNotification";
 import { alertService } from "./services/alertService";
+import { authService } from "./services/authService";
 import { INITIAL_ALERTS } from "./data/alertsData";
 
 export default function App() {
@@ -142,13 +143,28 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Restore a persisted Supabase session so signed-in officers skip the login screen on reload
+  useEffect(() => {
+    let cancelled = false;
+    authService.getCurrentProfile().then((profile) => {
+      if (!cancelled && profile) {
+        setUser(profile);
+        setView((prev) => (prev === "landing" ? "app" : prev));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleLoginSuccess = (userData) => {
     setUser(userData);
     setView("app");
     setActivePage("dashboard");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authService.signOut();
     setView("landing");
   };
 
@@ -160,7 +176,6 @@ export default function App() {
     return (
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
-        onTriggerForbidden={() => setView("forbidden")}
         onBackHome={() => setView("landing")}
       />
     );

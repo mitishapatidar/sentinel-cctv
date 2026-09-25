@@ -1,48 +1,99 @@
 import React, { useState } from "react";
-import { Shield, Lock, Mail, ArrowRight, AlertTriangle, ArrowLeft, Building, BadgeCheck } from "lucide-react";
+import { Shield, Lock, Mail, ArrowRight, AlertTriangle, ArrowLeft, Building, BadgeCheck, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { authService } from "../services/authService";
 
-export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHome }) {
-  const [badgeId, setBadgeId] = useState("GP-CID-7809");
-  const [email, setEmail] = useState("sentialcctv@gmail.com");
-  const [password, setPassword] = useState("sentialofficial@1428");
+const DEPARTMENTS = [
+  "CID Crime Branch (Criminal Pursuit & ANPR)",
+  "State Command & Control Center (Gandhinagar HQ)",
+  "Traffic Police Directorate (State Highway Grid)",
+  "Anti-Terrorism Squad (ATS) & Coastal Security",
+  "Cyber Crime Cell & Digital Forensics",
+];
+
+export default function LoginPage({ onLoginSuccess, onBackHome }) {
+  const [mode, setMode] = useState("signin"); // "signin" | "signup"
+  const [badgeId, setBadgeId] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("admin"); // Only "admin" | "operator"
-  const [department, setDepartment] = useState("CID Crime Branch (Criminal Pursuit & ANPR)");
+  const [department, setDepartment] = useState(DEPARTMENTS[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  const handleSubmit = (e) => {
+  const isSignUp = mode === "signup";
+
+  const switchMode = (next) => {
+    setMode(next);
+    setError("");
+    setNotice("");
+    setPassword("");
+    setConfirmPassword("");
+  };
+
+  const fillDemoAccount = () => {
+    switchMode("signin");
+    setEmail(authService.demoAccount.email);
+    setPassword(authService.demoAccount.password);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setNotice("");
 
-    if (!badgeId || !email || !password) {
-      setError("Please fill in Police Badge ID, Email, and Access Token Password.");
+    if (!email || !password) {
+      setError("Please enter your email and password.");
       return;
     }
 
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-
-      // Validate credentials:
-      // Authorized Access Token Password is "sentialofficial@1428"
-      const isAuthorized = password.trim() === "sentialofficial@1428";
-
-      if (!isAuthorized) {
-        // Fake person / unauthorized intruder attempt -> Redirect to 403 Forbidden!
-        onTriggerForbidden();
+    if (isSignUp) {
+      if (!badgeId.trim()) {
+        setError("Please enter your Police Badge / Officer ID.");
         return;
       }
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+    }
 
-      // Authorized Police Officer
-      onLoginSuccess({
-        badgeId,
-        email,
-        department,
-        role: role === "admin" ? "Dy. Commissioner (Admin)" : "Traffic In-Charge (Operator)",
-        roleKey: role,
-      });
-    }, 600);
+    setLoading(true);
+    try {
+      if (isSignUp) {
+        const res = await authService.signUp({ email, password, badgeId, roleKey: role, department });
+        if (res.error) {
+          setError(res.error);
+        } else if (res.needsConfirmation) {
+          switchMode("signin");
+          setNotice(`Account created. A verification link has been sent to ${email.trim()}. Confirm it, then sign in.`);
+        } else {
+          onLoginSuccess(res.profile);
+        }
+      } else {
+        const res = await authService.signIn({ email, password });
+        if (res.error) {
+          setError(res.error);
+        } else {
+          onLoginSuccess(res.profile);
+        }
+      }
+    } catch (err) {
+      setError("Could not reach the authentication server. Check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const inputClass =
+    "w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors";
+  const labelClass = "block font-semibold text-[#7d8da3] uppercase tracking-wider mb-1.5";
 
   return (
     <div className="min-h-screen bg-[#0a0e14] text-[#e6edf5] flex flex-col justify-between p-4 sm:p-6 relative">
@@ -103,6 +154,27 @@ export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHo
           </p>
         </div>
 
+        {/* Sign In / Sign Up Tabs */}
+        <div className="grid grid-cols-2 gap-1 p-1 mb-5 rounded-xl bg-[#0a0e14] border border-[#1e2a3a] text-xs">
+          {[
+            { key: "signin", label: "Sign In" },
+            { key: "signup", label: "Sign Up" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => switchMode(tab.key)}
+              className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
+                mode === tab.key
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-[#7d8da3] hover:text-white"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {error && (
           <div className="mb-5 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -110,123 +182,136 @@ export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHo
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          
-          {/* 1. Police Badge / Officer ID */}
-          <div>
-            <label className="block font-semibold text-[#7d8da3] uppercase tracking-wider mb-1.5">
-              Police Badge / Officer ID
-            </label>
-            <div className="relative">
-              <BadgeCheck className="absolute left-3.5 top-3 h-4 w-4 text-[#7d8da3]" />
-              <input
-                type="text"
-                value={badgeId}
-                onChange={(e) => setBadgeId(e.target.value)}
-                placeholder="GP-CID-7809"
-                className="w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white font-mono uppercase focus:outline-none focus:border-blue-500 transition-colors"
-                required
-              />
-            </div>
+        {notice && (
+          <div className="mb-5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>{notice}</span>
           </div>
+        )}
 
-          {/* 2. Officer Registered Email */}
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+
+          {/* Police Badge / Officer ID (sign up only) */}
+          {isSignUp && (
+            <div>
+              <label className={labelClass}>Police Badge / Officer ID</label>
+              <div className="relative">
+                <BadgeCheck className="absolute left-3.5 top-3 h-4 w-4 text-[#7d8da3]" />
+                <input
+                  type="text"
+                  value={badgeId}
+                  onChange={(e) => setBadgeId(e.target.value)}
+                  placeholder="GP-CID-7809"
+                  className={`${inputClass} font-mono uppercase`}
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Email */}
           <div>
-            <label className="block font-semibold text-[#7d8da3] uppercase tracking-wider mb-1.5">
-              Officer Registered Email
-            </label>
+            <label className={labelClass}>Officer Email</label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-3 h-4 w-4 text-[#7d8da3]" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="sentialcctv@gmail.com"
-                className="w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+                placeholder="officer@example.com"
+                autoComplete="email"
+                className={inputClass}
                 required
               />
             </div>
           </div>
 
-          {/* 3. Access Token Password */}
+          {/* Password */}
           <div>
-            <label className="block font-semibold text-[#7d8da3] uppercase tracking-wider mb-1.5">
-              Access Token Password (XXXX-XXXX-XXXX)
-            </label>
+            <label className={labelClass}>Password</label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#7d8da3]" />
               <input
-                type="text"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="sentialofficial@1428"
-                className="w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-blue-500 transition-colors"
+                placeholder={isSignUp ? "Minimum 6 characters" : "Enter your password"}
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+                className={`${inputClass} pr-10 font-mono`}
                 required
               />
-            </div>
-          </div>
-
-          {/* 4. Access Role (RBAC) - Admin and Operator only */}
-          <div>
-            <label className="block font-semibold text-[#7d8da3] uppercase tracking-wider mb-1.5">
-              Access Role (RBAC)
-            </label>
-            <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
-                onClick={() => setRole("admin")}
-                className={`py-2 px-4 rounded-xl text-xs font-semibold border cursor-pointer transition-all flex items-center justify-center gap-2 ${
-                  role === "admin"
-                    ? "bg-blue-600/20 border-blue-500 text-blue-400 font-bold shadow-sm"
-                    : "bg-[#0a0e14] border-[#1e2a3a] text-[#7d8da3] hover:text-white"
-                }`}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-2.5 text-[#7d8da3] hover:text-white cursor-pointer"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                <span>🛡️ Admin</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole("operator")}
-                className={`py-2 px-4 rounded-xl text-xs font-semibold border cursor-pointer transition-all flex items-center justify-center gap-2 ${
-                  role === "operator"
-                    ? "bg-blue-600/20 border-blue-500 text-blue-400 font-bold shadow-sm"
-                    : "bg-[#0a0e14] border-[#1e2a3a] text-[#7d8da3] hover:text-white"
-                }`}
-              >
-                <span>📡 Operator</span>
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
 
-          {/* 5. Department Clearance */}
-          <div>
-            <label className="block font-semibold text-[#7d8da3] uppercase tracking-wider mb-1.5">
-              Department Clearance
-            </label>
-            <div className="relative">
-              <Building className="absolute left-3.5 top-3 h-4 w-4 text-[#7d8da3]" />
-              <select
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
-              >
-                <option value="CID Crime Branch (Criminal Pursuit & ANPR)">
-                  CID Crime Branch (Criminal Pursuit & ANPR)
-                </option>
-                <option value="State Command & Control Center (Gandhinagar HQ)">
-                  State Command & Control Center (Gandhinagar HQ)
-                </option>
-                <option value="Traffic Police Directorate (State Highway Grid)">
-                  Traffic Police Directorate (State Highway Grid)
-                </option>
-                <option value="Anti-Terrorism Squad (ATS) & Coastal Security">
-                  Anti-Terrorism Squad (ATS) & Coastal Security
-                </option>
-                <option value="Cyber Crime Cell & Digital Forensics">
-                  Cyber Crime Cell & Digital Forensics
-                </option>
-              </select>
-            </div>
-          </div>
+          {isSignUp && (
+            <>
+              {/* Confirm Password */}
+              <div>
+                <label className={labelClass}>Confirm Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#7d8da3]" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter password"
+                    autoComplete="new-password"
+                    className={`${inputClass} font-mono`}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Access Role (RBAC) - Admin and Operator only */}
+              <div>
+                <label className={labelClass}>Access Role (RBAC)</label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { key: "admin", label: "🛡️ Admin" },
+                    { key: "operator", label: "📡 Operator" },
+                  ].map((r) => (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => setRole(r.key)}
+                      className={`py-2 px-4 rounded-xl text-xs font-semibold border cursor-pointer transition-all flex items-center justify-center gap-2 ${
+                        role === r.key
+                          ? "bg-blue-600/20 border-blue-500 text-blue-400 font-bold shadow-sm"
+                          : "bg-[#0a0e14] border-[#1e2a3a] text-[#7d8da3] hover:text-white"
+                      }`}
+                    >
+                      <span>{r.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Department Clearance */}
+              <div>
+                <label className={labelClass}>Department Clearance</label>
+                <div className="relative">
+                  <Building className="absolute left-3.5 top-3 h-4 w-4 text-[#7d8da3]" />
+                  <select
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    className="w-full bg-[#0a0e14] border border-[#1e2a3a] rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                  >
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Submit Button */}
           <button
@@ -234,9 +319,34 @@ export default function LoginPage({ onLoginSuccess, onTriggerForbidden, onBackHo
             disabled={loading}
             className="w-full mt-2 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/25 cursor-pointer text-sm"
           >
-            {loading ? "Authenticating Clearance..." : "Secure Access to Statewide Grid"}
+            {loading
+              ? isSignUp ? "Creating Officer Account..." : "Authenticating Clearance..."
+              : isSignUp ? "Create Officer Account" : "Secure Access to Statewide Grid"}
             <ArrowRight className="h-4 w-4" />
           </button>
+
+          <p className="text-center text-[11px] text-[#7d8da3]">
+            {isSignUp ? "Already have an account? " : "New officer? "}
+            <button
+              type="button"
+              onClick={() => switchMode(isSignUp ? "signin" : "signup")}
+              className="text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
+            >
+              {isSignUp ? "Sign in" : "Create an account"}
+            </button>
+            {!isSignUp && (
+              <>
+                {" • "}
+                <button
+                  type="button"
+                  onClick={fillDemoAccount}
+                  className="text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
+                >
+                  Use demo account
+                </button>
+              </>
+            )}
+          </p>
         </form>
 
         {/* Legal Notice Box */}
