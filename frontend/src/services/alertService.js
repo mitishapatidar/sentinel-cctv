@@ -1,5 +1,4 @@
 import { supabase } from "./supabase";
-import { INITIAL_ALERTS } from "../data/alertsData";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_API_URL || "http://127.0.0.1:8000";
 
@@ -37,9 +36,9 @@ export const alertService = {
       } catch (e) {}
     }
 
-    // 3. High-fidelity Gujarat Police Alerts Dataset
-    if (!alerts || alerts.length === 0) {
-      alerts = INITIAL_ALERTS;
+    // No backend or database reachable: show nothing rather than made-up alerts
+    if (!alerts) {
+      alerts = [];
     }
 
     // Merge status overrides from local persistence

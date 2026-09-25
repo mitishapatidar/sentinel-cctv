@@ -19,10 +19,9 @@ import {
 import { supabase } from "../supabaseClient";
 import { alertService } from "../services/alertService";
 import { auditService } from "../services/auditService";
-import { INITIAL_ALERTS } from "../data/alertsData";
 
 export default function AlertsPage({ setActivePage, onTrackVehicle }) {
-  const [alerts, setAlerts] = useState(INITIAL_ALERTS);
+  const [alerts, setAlerts] = useState([]);
   const [filterStatus, setFilterStatus] = useState("all");
   const [loading, setLoading] = useState(false);
 

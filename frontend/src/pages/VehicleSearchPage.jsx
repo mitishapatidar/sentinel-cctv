@@ -5,6 +5,7 @@ import L from "leaflet";
 import gujaratBorder from "../data/gujaratBorder.json";
 import { supabase } from "../supabaseClient";
 import { auditService } from "../services/auditService";
+import { watchlistService } from "../services/watchlistService";
 
 // Real Google Maps & OpenStreetMap tile layers (Identical to Dashboard GIS engine)
 const GOOGLE_MAP_LAYERS = {
@@ -93,7 +94,23 @@ const createNumberedIcon = (number, isAlert = false) => {
 
 // Quick-target tags: only serious cases are highlighted, everything else stays neutral
 const TAG_SEVERE = "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30";
+const SEVERE_CATEGORIES = ["stolen", "wanted", "kidnapping", "missing"];
 const TAG_NEUTRAL = "text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_API_URL || "http://127.0.0.1:8000";
+
+// Average speed between two consecutive sightings (straight-line distance / time gap)
+function estimateSpeed(prev, cur) {
+  if (!prev || prev.lat == null || cur.lat == null) return "—";
+  const hours = (new Date(cur.detected_at) - new Date(prev.detected_at)) / 3.6e6;
+  if (hours <= 0.005) return "—";
+  const rad = (x) => (x * Math.PI) / 180;
+  const dLat = rad(cur.lat - prev.lat);
+  const dLng = rad(cur.lng - prev.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(prev.lat)) * Math.cos(rad(cur.lat)) * Math.sin(dLng / 2) ** 2;
+  const km = 12742 * Math.asin(Math.sqrt(h));
+  return `${Math.round(km / hours)} km/h`;
+}
 
 export default function VehicleSearchPage({ initialPlate, onPlateSearched }) {
   const [query, setQuery] = useState(() => {
@@ -106,782 +123,83 @@ export default function VehicleSearchPage({ initialPlate, onPlateSearched }) {
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
+  const [searchMessage, setSearchMessage] = useState("");
+  const [quickTargets, setQuickTargets] = useState([]);
+
+  useEffect(() => {
+    watchlistService.getWatchlist("vehicle").then(({ data }) => {
+      const active = (Array.isArray(data) ? data : []).filter((w) => w.is_active !== false);
+      setQuickTargets(
+        active.slice(0, 16).map((w) => ({
+          plate: w.identifier,
+          tag: w.category ? w.category.charAt(0).toUpperCase() + w.category.slice(1) : "Watchlist",
+          badge: SEVERE_CATEGORIES.includes(w.category) ? TAG_SEVERE : TAG_NEUTRAL,
+        }))
+      );
+    });
+  }, []);
   const [mapType, setMapType] = useState("streets"); // default: Google Maps
 
   const activeLayer = GOOGLE_MAP_LAYERS[mapType] || GOOGLE_MAP_LAYERS.streets;
 
 
-  const mockTraffics = {
-    "GJ-01-AB-1234": {
-      plate: "GJ-01-AB-1234",
-      model: "White Maruti Swift Dzire",
-      category: "STOLEN VEHICLE (Navrangpura PS FIR #391/2026)",
-      isWatchlist: true,
-      severity: "critical",
-      totalSightings: 4,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam01",
-          name: "01 Chiman bhai Bridge",
-          city: "Ahmedabad",
-          lat: 23.0301,
-          lng: 72.5075,
-          timestamp: "13-09-2026 17:15:22",
-          confidence: "96.4%",
-          speed: "54 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam04",
-          name: "04 Paldi Circle",
-          city: "Ahmedabad",
-          lat: 23.0131,
-          lng: 72.5624,
-          timestamp: "13-09-2026 18:38:10",
-          confidence: "98.1%",
-          speed: "42 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam12",
-          name: "12 Tri Mandir Adalaj Tollnaka",
-          city: "Gandhinagar",
-          lat: 23.1673,
-          lng: 72.5812,
-          timestamp: "13-09-2026 19:24:45",
-          confidence: "94.8%",
-          speed: "78 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 4,
-          camId: "cam08",
-          name: "08 majewadi-gate-junagadh",
-          city: "Junagadh",
-          lat: 21.5281,
-          lng: 70.4619,
-          timestamp: "13-09-2026 21:12:05",
-          confidence: "95.2%",
-          speed: "35 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-05-CD-5678": {
-      plate: "GJ-05-CD-5678",
-      model: "Silver Hyundai Creta (2024)",
-      category: "AMBER ALERT / KIDNAPPING (Varachha PS Surat Crime #108/2026)",
-      isWatchlist: true,
-      severity: "critical",
-      totalSightings: 4,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam14",
-          name: "14 Surat Ring Road",
-          city: "Surat",
-          lat: 21.1702,
-          lng: 72.8311,
-          timestamp: "13-09-2026 16:45:10",
-          confidence: "97.2%",
-          speed: "62 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam13",
-          name: "13 Bharuch Toll Plaza",
-          city: "Bharuch",
-          lat: 21.7051,
-          lng: 72.9959,
-          timestamp: "13-09-2026 17:50:33",
-          confidence: "95.8%",
-          speed: "84 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam02",
-          name: "02 Janpath",
-          city: "Ahmedabad",
-          lat: 23.0225,
-          lng: 72.5714,
-          timestamp: "13-09-2026 19:10:04",
-          confidence: "98.4%",
-          speed: "48 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 4,
-          camId: "cam04",
-          name: "04 Paldi Circle",
-          city: "Ahmedabad",
-          lat: 23.0131,
-          lng: 72.5624,
-          timestamp: "13-09-2026 20:55:18",
-          confidence: "99.1%",
-          speed: "38 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-18-XY-9012": {
-      plate: "GJ-18-XY-9012",
-      model: "Grey Honda City",
-      category: "FATAL HIT & RUN (Sector 7 PS Gandhinagar IPC 304A)",
-      isWatchlist: true,
-      severity: "high",
-      totalSightings: 3,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam12",
-          name: "12 Tri Mandir Adalaj Tollnaka",
-          city: "Gandhinagar",
-          lat: 23.1673,
-          lng: 72.5812,
-          timestamp: "13-09-2026 18:20:11",
-          confidence: "93.9%",
-          speed: "92 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam03",
-          name: "03 O.N.G.C. Office",
-          city: "Ahmedabad",
-          lat: 23.0645,
-          lng: 72.5954,
-          timestamp: "13-09-2026 19:05:44",
-          confidence: "96.1%",
-          speed: "55 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam01",
-          name: "01 Chiman bhai Bridge",
-          city: "Ahmedabad",
-          lat: 23.0301,
-          lng: 72.5075,
-          timestamp: "13-09-2026 20:30:19",
-          confidence: "97.0%",
-          speed: "45 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-06-ER-3456": {
-      plate: "GJ-06-ER-3456",
-      model: "Black Mahindra Scorpio-N",
-      category: "HABITUAL E-CHALLAN DEFAULTER (14 Unpaid Red Light Fines)",
-      isWatchlist: true,
-      severity: "medium",
-      totalSightings: 3,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam15",
-          name: "15 Vadodara Central",
-          city: "Vadodara",
-          lat: 22.3072,
-          lng: 73.1812,
-          timestamp: "13-09-2026 15:40:22",
-          confidence: "94.5%",
-          speed: "52 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam13",
-          name: "13 Bharuch Toll Plaza",
-          city: "Bharuch",
-          lat: 21.7051,
-          lng: 72.9959,
-          timestamp: "13-09-2026 17:15:09",
-          confidence: "97.2%",
-          speed: "75 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam04",
-          name: "04 Paldi Circle",
-          city: "Ahmedabad",
-          lat: 23.0131,
-          lng: 72.5624,
-          timestamp: "13-09-2026 20:20:41",
-          confidence: "96.4%",
-          speed: "35 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-03-GH-7890": {
-      plate: "GJ-03-GH-7890",
-      model: "Dark Red Toyota Fortuner",
-      category: "CONTRABAND SURVEILLANCE (Rajkot Crime Branch Alert)",
-      isWatchlist: true,
-      severity: "high",
-      totalSightings: 3,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam10",
-          name: "10 char-chowk-road-2-junagadh",
-          city: "Junagadh",
-          lat: 21.5190,
-          lng: 70.4578,
-          timestamp: "13-09-2026 17:22:15",
-          confidence: "95.5%",
-          speed: "40 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam08",
-          name: "08 majewadi-gate-junagadh",
-          city: "Junagadh",
-          lat: 21.5281,
-          lng: 70.4619,
-          timestamp: "13-09-2026 18:40:11",
-          confidence: "98.2%",
-          speed: "38 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam06",
-          name: "06 Timbavadi gate-Junagadh",
-          city: "Junagadh",
-          lat: 21.5054,
-          lng: 70.4352,
-          timestamp: "13-09-2026 20:10:02",
-          confidence: "96.4%",
-          speed: "46 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-12-KL-4321": {
-      plate: "GJ-12-KL-4321",
-      model: "Blue Maruti Baleno Alpha",
-      category: "HIGHWAY CARJACKING (Bhuj 'A' Division FIR #201)",
-      isWatchlist: true,
-      severity: "critical",
-      totalSightings: 3,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam11",
-          name: "11 Gandhi Ashram",
-          city: "Ahmedabad",
-          lat: 23.0605,
-          lng: 72.5802,
-          timestamp: "13-09-2026 17:35:40",
-          confidence: "94.2%",
-          speed: "50 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam05",
-          name: "05 Visat teen Rasta",
-          city: "Ahmedabad",
-          lat: 23.1042,
-          lng: 72.5932,
-          timestamp: "13-09-2026 19:15:10",
-          confidence: "97.4%",
-          speed: "65 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam01",
-          name: "01 Chiman bhai Bridge",
-          city: "Ahmedabad",
-          lat: 23.0301,
-          lng: 72.5075,
-          timestamp: "13-09-2026 20:45:00",
-          confidence: "95.0%",
-          speed: "42 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-15-PQ-2109": {
-      plate: "GJ-15-PQ-2109",
-      model: "Dark Grey Kia Seltos",
-      category: "ARMED HEIST GETAWAY (Vapi Town PS Intercept Order)",
-      isWatchlist: true,
-      severity: "critical",
-      totalSightings: 3,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam14",
-          name: "14 Surat Ring Road",
-          city: "Surat",
-          lat: 21.1702,
-          lng: 72.8311,
-          timestamp: "13-09-2026 18:10:44",
-          confidence: "96.5%",
-          speed: "82 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam13",
-          name: "13 Bharuch Toll Plaza",
-          city: "Bharuch",
-          lat: 21.7051,
-          lng: 72.9959,
-          timestamp: "13-09-2026 19:22:18",
-          confidence: "94.7%",
-          speed: "88 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam15",
-          name: "15 Vadodara Central Checkpoint",
-          city: "Vadodara",
-          lat: 22.3072,
-          lng: 73.1812,
-          timestamp: "13-09-2026 20:48:55",
-          confidence: "98.0%",
-          speed: "74 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-10-RS-6543": {
-      plate: "GJ-10-RS-6543",
-      model: "Black Royal Enfield Classic 350",
-      category: "STOLEN MOTORCYCLE (Jamnagar City 'B' Division)",
-      isWatchlist: true,
-      severity: "medium",
-      totalSightings: 2,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam09",
-          name: "09 new-bypass-near-by-circle-junagadh-2",
-          city: "Junagadh",
-          lat: 21.5412,
-          lng: 70.4489,
-          timestamp: "13-09-2026 18:30:12",
-          confidence: "96.0%",
-          speed: "48 km/h",
-          snapshot: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam10",
-          name: "10 char-chowk-road-2-junagadh",
-          city: "Junagadh",
-          lat: 21.5190,
-          lng: 70.4578,
-          timestamp: "13-09-2026 20:15:30",
-          confidence: "97.0%",
-          speed: "36 km/h",
-          snapshot: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-08-TU-1098": {
-      plate: "GJ-08-TU-1098",
-      model: "White Mahindra Bolero Camper",
-      category: "BLOCKADE EVASION / SAND MINING (Palanpur Highway PS)",
-      isWatchlist: true,
-      severity: "high",
-      totalSightings: 2,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam05",
-          name: "05 Visat teen Rasta",
-          city: "Ahmedabad",
-          lat: 23.1042,
-          lng: 72.5932,
-          timestamp: "13-09-2026 18:15:00",
-          confidence: "94.0%",
-          speed: "55 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam12",
-          name: "12 Tri Mandir Adalaj Tollnaka",
-          city: "Gandhinagar",
-          lat: 23.1673,
-          lng: 72.5812,
-          timestamp: "13-09-2026 20:05:40",
-          confidence: "98.0%",
-          speed: "68 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-23-VW-5432": {
-      plate: "GJ-23-VW-5432",
-      model: "White Honda Activa 6G",
-      category: "SERIAL CHAIN SNATCHING (Anand Town PS Case #224)",
-      isWatchlist: true,
-      severity: "high",
-      totalSightings: 2,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam02",
-          name: "02 Janpath",
-          city: "Ahmedabad",
-          lat: 23.0225,
-          lng: 72.5714,
-          timestamp: "13-09-2026 19:40:15",
-          confidence: "97.1%",
-          speed: "42 km/h",
-          snapshot: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam04",
-          name: "04 Paldi Circle",
-          city: "Ahmedabad",
-          lat: 23.0131,
-          lng: 72.5624,
-          timestamp: "13-09-2026 20:44:00",
-          confidence: "98.0%",
-          speed: "34 km/h",
-          snapshot: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-27-MN-8765": {
-      plate: "GJ-27-MN-8765",
-      model: "White Tata Nexon EV",
-      category: "INDUSTRIAL PERIMETER PROWLING (Sanand Rural PS Alert)",
-      isWatchlist: true,
-      severity: "medium",
-      totalSightings: 3,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam04",
-          name: "04 Paldi Circle",
-          city: "Ahmedabad",
-          lat: 23.0131,
-          lng: 72.5624,
-          timestamp: "13-09-2026 18:20:00",
-          confidence: "95.0%",
-          speed: "40 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam01",
-          name: "01 Chiman bhai Bridge",
-          city: "Ahmedabad",
-          lat: 23.0301,
-          lng: 72.5075,
-          timestamp: "13-09-2026 19:35:10",
-          confidence: "97.5%",
-          speed: "56 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam05",
-          name: "05 Visat teen Rasta",
-          city: "Ahmedabad",
-          lat: 23.1042,
-          lng: 72.5932,
-          timestamp: "13-09-2026 20:40:22",
-          confidence: "96.2%",
-          speed: "62 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-16-ZA-9876": {
-      plate: "GJ-16-ZA-9876",
-      model: "Silver Hyundai i20",
-      category: "CLONED NUMBER PLATE SUSPICION (Ankleshwar GIDC Alert)",
-      isWatchlist: true,
-      severity: "high",
-      totalSightings: 2,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam13",
-          name: "13 Bharuch Toll Plaza",
-          city: "Bharuch",
-          lat: 21.7051,
-          lng: 72.9959,
-          timestamp: "13-09-2026 19:10:00",
-          confidence: "96.8%",
-          speed: "70 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam15",
-          name: "15 Vadodara Central",
-          city: "Vadodara",
-          lat: 22.3072,
-          lng: 73.1812,
-          timestamp: "13-09-2026 20:30:15",
-          confidence: "98.3%",
-          speed: "58 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-02-BA-4589": {
-      plate: "GJ-02-BA-4589",
-      model: "Black Mahindra Scorpio",
-      category: "CONTRABAND LIQUOR SMUGGLING (Palanpur Highway Checkpost)",
-      isWatchlist: true,
-      severity: "critical",
-      totalSightings: 3,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam09",
-          name: "09 Deesa Highway Palanpur",
-          city: "Palanpur",
-          lat: 24.1724,
-          lng: 72.4346,
-          timestamp: "13-09-2026 17:30:00",
-          confidence: "97.4%",
-          speed: "75 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam10",
-          name: "10 Mehsana Bypass Junction",
-          city: "Mehsana",
-          lat: 23.588,
-          lng: 72.3693,
-          timestamp: "13-09-2026 19:00:12",
-          confidence: "96.1%",
-          speed: "68 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 3,
-          camId: "cam05",
-          name: "05 Visat teen Rasta",
-          city: "Ahmedabad",
-          lat: 23.1042,
-          lng: 72.5932,
-          timestamp: "13-09-2026 20:45:30",
-          confidence: "98.9%",
-          speed: "55 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-04-DE-7712": {
-      plate: "GJ-04-DE-7712",
-      model: "White Toyota Etios",
-      category: "TOLL PLAZA FASTAG EVADER & CRASH (Tarapur Toll Plaza)",
-      isWatchlist: true,
-      severity: "high",
-      totalSightings: 2,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam07",
-          name: "07 Ghogha Circle",
-          city: "Bhavnagar",
-          lat: 21.7645,
-          lng: 72.1519,
-          timestamp: "13-09-2026 18:15:00",
-          confidence: "95.5%",
-          speed: "82 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam15",
-          name: "15 Vadodara Central",
-          city: "Vadodara",
-          lat: 22.3072,
-          lng: 73.1812,
-          timestamp: "13-09-2026 20:50:00",
-          confidence: "97.2%",
-          speed: "64 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-14-KK-3390": {
-      plate: "GJ-14-KK-3390",
-      model: "Silver Maruti Eeco Van",
-      category: "SUSPECTED ABDUCTION / MISSING PERSON (Amreli Town Case #91)",
-      isWatchlist: true,
-      severity: "critical",
-      totalSightings: 2,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam03",
-          name: "03 Indira Circle",
-          city: "Rajkot",
-          lat: 22.2965,
-          lng: 70.7744,
-          timestamp: "13-09-2026 18:40:00",
-          confidence: "96.4%",
-          speed: "50 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam11",
-          name: "11 Khambhalia Gate",
-          city: "Jamnagar",
-          lat: 22.4707,
-          lng: 70.0577,
-          timestamp: "13-09-2026 20:25:10",
-          confidence: "97.9%",
-          speed: "60 km/h",
-          snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        },
-      ],
-    },
-    "GJ-09-PP-6211": {
-      plate: "GJ-09-PP-6211",
-      model: "Black Mahindra Thar",
-      category: "UNREGISTERED RASH DRIVING & WEAPONS BRANDISHING (Sabarkantha PS)",
-      isWatchlist: true,
-      severity: "high",
-      totalSightings: 2,
-      timeline: [
-        {
-          order: 1,
-          camId: "cam12",
-          name: "12 Tri Mandir Adalaj Tollnaka",
-          city: "Gandhinagar",
-          lat: 23.1673,
-          lng: 72.5812,
-          timestamp: "13-09-2026 19:20:00",
-          confidence: "98.1%",
-          speed: "88 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-        {
-          order: 2,
-          camId: "cam02",
-          name: "02 Janpath",
-          city: "Ahmedabad",
-          lat: 23.0225,
-          lng: 72.5714,
-          timestamp: "13-09-2026 20:15:30",
-          confidence: "99.0%",
-          speed: "45 km/h",
-          snapshot: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-        },
-      ],
-    },
-  };
 
   const handleSearch = async (plateToSearch) => {
     const target = (plateToSearch || query).trim().toUpperCase();
+    if (!target) return;
     setSearching(true);
+    setSearchMessage("");
     auditService.log("ANPR_SEARCH", `Vehicle Query: ${target}`, "CHAIN_OF_CUSTODY_SECURED");
     if (onPlateSearched) onPlateSearched(target);
 
     try {
-      // 1. Try querying real Supabase detections table
-      const { data: detData } = await supabase
-        .from("detections")
-        .select("*, cameras(name, city, lat, lng)")
-        .eq("plate_number", target)
-        .order("detected_at", { ascending: true });
+      const res = await fetch(`${BACKEND_URL}/api/vehicles/${encodeURIComponent(target)}/sightings`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
 
-      if (detData && detData.length > 0) {
-        // Query watchlist profile
-        const { data: watchData } = await supabase
-          .from("watchlist")
-          .select("*")
-          .eq("identifier", target)
-          .single();
-
-        const timeline = detData.map((d, idx) => ({
+      const timeline = data.sightings.map((d, idx) => {
+        const prev = data.sightings[idx - 1];
+        return {
           order: idx + 1,
           camId: d.camera_id,
-          name: d.cameras?.name || d.camera_id,
-          city: d.cameras?.city || "Gujarat",
-          lat: d.cameras?.lat || 23.0225,
-          lng: d.cameras?.lng || 72.5714,
+          name: d.name,
+          city: d.city || "Gujarat",
+          lat: d.lat ?? 23.0225,
+          lng: d.lng ?? 72.5714,
           timestamp: new Date(d.detected_at).toLocaleString("en-GB", { timeZone: "Asia/Kolkata" }),
-          confidence: `${(d.confidence * 100).toFixed(1)}%`,
-          speed: `${Math.floor(35 + (idx * 15) % 45)} km/h`,
-          snapshot: d.frame_snapshot_url || "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-        }));
+          confidence: `${((d.confidence || 0) * 100).toFixed(1)}%${d.match === "exact" ? "" : ` (${d.match} read: ${d.plate_read})`}`,
+          speed: estimateSpeed(prev, d),
+        };
+      });
 
-        setResults({
-          plate: target,
-          model: watchData?.description?.split("-")[0]?.trim() || (detData[0].vehicle_type ? `${detData[0].vehicle_type}` : "Passenger Vehicle"),
-          category: watchData?.description || `${watchData?.category?.toUpperCase() || "SURVEILLANCE TRACK"} - Verified CCTV Detections`,
-          isWatchlist: !!watchData,
-          severity: watchData?.category === "stolen" || watchData?.category === "wanted" ? "critical" : "high",
-          totalSightings: timeline.length,
-          timeline,
-        });
-        setSearching(false);
+      if (timeline.length === 0) {
+        setResults(null);
+        setSearchMessage(
+          data.watchlist
+            ? `${target} is on the watchlist, but no camera has picked it up yet.`
+            : `No camera has picked up ${target} yet.`
+        );
         return;
       }
-    } catch (err) {
-      console.warn("[VehicleSearch] Supabase query fallback:", err);
-    }
 
-    // 2. Fallback to mockTraffics
-    setTimeout(() => {
+      const watch = data.watchlist;
+      const types = [...new Set(data.sightings.map((d) => d.vehicle_type).filter(Boolean))];
+      setResults({
+        plate: target,
+        model: types.length ? types.join(" / ") : "Vehicle",
+        category: watch ? `${watch.category.toUpperCase()} – ${watch.description || "Watchlist entry"}` : "Not on the watchlist",
+        isWatchlist: !!watch,
+        severity: watch && ["stolen", "wanted"].includes(watch.category) ? "critical" : "high",
+        totalSightings: timeline.length,
+        timeline,
+      });
+    } catch (err) {
+      console.warn("[VehicleSearch] sightings request failed:", err);
+      setResults(null);
+      setSearchMessage("Can't reach the ANPR backend. Start the relay server (port 8000) and try again.");
+    } finally {
       setSearching(false);
-      if (mockTraffics[target]) {
-        setResults(mockTraffics[target]);
-      } else {
-        setResults({
-          plate: target,
-          model: "Sedan / Passenger Vehicle",
-          category: "General Registry Check",
-          isWatchlist: false,
-          totalSightings: 2,
-          timeline: [
-            {
-              order: 1,
-              camId: "cam02",
-              name: "02 Janpath",
-              city: "Ahmedabad",
-              lat: 23.0225,
-              lng: 72.5714,
-              timestamp: "13-09-2026 19:30:15",
-              confidence: "91.2%",
-              speed: "45 km/h",
-              snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-            },
-            {
-              order: 2,
-              camId: "cam06",
-              name: "06 Timbavadi gate-Junagadh",
-              city: "Junagadh",
-              lat: 21.5054,
-              lng: 70.4352,
-              timestamp: "13-09-2026 21:20:44",
-              confidence: "93.5%",
-              speed: "60 km/h",
-              snapshot: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400&q=80",
-            },
-          ],
-        });
-      }
-    }, 250);
+    }
   };
 
   useEffect(() => {
@@ -932,44 +250,20 @@ export default function VehicleSearchPage({ initialPlate, onPlateSearched }) {
             </button>
           </div>
 
-          {/* Quick Demo Test Buttons in Systematic 4-Column Grid */}
+          {/* Watchlisted vehicles, one click to search */}
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300">
                 Quick Surveillance Targets
               </span>
               <span className="text-[11px] font-mono text-[#7d8da3]">
-                16 Hotlists • 4 Columns Systematic Grid
+                {quickTargets.length} watchlisted vehicles
               </span>
             </div>
 
             {/* Fixed 4 Columns, Auto-Expanding Rows (Option 1: Unified Slate & Police Navy) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-              {[
-                // Row 1
-                { plate: "GJ-01-AB-1234", tag: "Stolen Swift", badge: TAG_NEUTRAL },
-                { plate: "GJ-05-CD-5678", tag: "Amber Creta", badge: TAG_SEVERE },
-                { plate: "GJ-18-XY-9012", tag: "Hit & Run City", badge: TAG_NEUTRAL },
-                { plate: "GJ-06-ER-3456", tag: "Challan Defaulter", badge: TAG_NEUTRAL },
-
-                // Row 2
-                { plate: "GJ-03-GH-7890", tag: "Contraband Fortuner", badge: TAG_SEVERE },
-                { plate: "GJ-12-KL-4321", tag: "Carjacking Baleno", badge: TAG_SEVERE },
-                { plate: "GJ-15-PQ-2109", tag: "Armed Heist Seltos", badge: TAG_SEVERE },
-                { plate: "GJ-10-RS-6543", tag: "Stolen Enfield", badge: TAG_NEUTRAL },
-
-                // Row 3
-                { plate: "GJ-08-TU-1098", tag: "Bolero Evader", badge: TAG_NEUTRAL },
-                { plate: "GJ-23-VW-5432", tag: "Snatching Activa", badge: TAG_NEUTRAL },
-                { plate: "GJ-27-MN-8765", tag: "Overload Brezza", badge: TAG_NEUTRAL },
-                { plate: "GJ-16-ZA-9876", tag: "Cloned Plate i20", badge: TAG_NEUTRAL },
-
-                // Row 4
-                { plate: "GJ-02-BA-4589", tag: "Smuggling Scorpio", badge: TAG_SEVERE },
-                { plate: "GJ-04-DE-7712", tag: "Toll Evader", badge: TAG_NEUTRAL },
-                { plate: "GJ-14-KK-3390", tag: "Missing Eeco", badge: TAG_NEUTRAL },
-                { plate: "GJ-09-PP-6211", tag: "Unregistered Thar", badge: TAG_NEUTRAL },
-              ].map((t) => (
+              {quickTargets.map((t) => (
                 <button
                   key={t.plate}
                   onClick={() => {
@@ -993,6 +287,12 @@ export default function VehicleSearchPage({ initialPlate, onPlateSearched }) {
       </div>
 
       {/* Trajectory Results View */}
+      {!searching && !results && searchMessage && (
+        <div className="mx-6 mt-6 p-4 rounded-xl border border-[#1e2a3a] bg-[#111823] text-sm text-[#cad5e2]">
+          {searchMessage}
+        </div>
+      )}
+
       {results && (
         <div className="p-6 space-y-6">
           {/* Target Vehicle Summary Card */}

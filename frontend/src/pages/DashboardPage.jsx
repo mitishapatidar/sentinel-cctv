@@ -75,23 +75,32 @@ export default function DashboardPage({ setActivePage }) {
   const [selectedCamera, setSelectedCamera] = useState(null);
   const [mapType, setMapType] = useState("streets"); // default: Google Maps
   const [stats, setStats] = useState({
-    total: 30,
-    live: 30,
-    alertsToday: 5,
-    vehiclesTracked: 148,
+    total: 0,
+    live: 0,
+    alertsToday: 0,
+    vehiclesTracked: "—",
   });
 
   useEffect(() => {
     const loadAlertCount = async () => {
       try {
         const { data } = await alertService.getAlerts();
-        if (data && data.length > 0) {
-          setStats((prev) => ({ ...prev, alertsToday: data.length }));
+        if (Array.isArray(data)) {
+          setStats((prev) => ({ ...prev, alertsToday: data.filter((a) => a.status === "pending").length }));
         }
       } catch (e) {}
     };
 
     loadAlertCount();
+
+    fetch(`${import.meta.env.VITE_BACKEND_API_URL || "http://127.0.0.1:8000"}/api/detections?limit=1000`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => {
+        if (Array.isArray(rows) && rows.length) {
+          setStats((prev) => ({ ...prev, vehiclesTracked: new Set(rows.map((r) => r.plate_number)).size }));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Camera totals follow the live registry
@@ -100,6 +109,16 @@ export default function DashboardPage({ setActivePage }) {
   }, [cameras.length]);
 
   const activeLayer = GOOGLE_MAP_LAYERS[mapType] || GOOGLE_MAP_LAYERS.streets;
+
+  const departmentCounts = Object.entries(
+    cameras.reduce((acc, c) => {
+      const dept = c.department || "Unassigned";
+      acc[dept] = (acc[dept] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0a0e14]">
@@ -273,45 +292,20 @@ export default function DashboardPage({ setActivePage }) {
             </h3>
 
             <div className="space-y-2.5 my-auto">
-              <div>
-                <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
-                  <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{t("cityPolice")}</span>
-                  <span className="font-mono font-bold text-white shrink-0">12 Feeds</span>
+              {departmentCounts.map(([dept, count], i) => (
+                <div key={dept}>
+                  <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
+                    <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{dept}</span>
+                    <span className="font-mono font-bold text-white shrink-0">{count} Feeds</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${["bg-blue-600", "bg-blue-500", "bg-blue-400", "bg-blue-300", "bg-blue-200"][i]}`}
+                      style={{ width: `${Math.round((count / Math.max(cameras.length, 1)) * 100)}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-600 rounded-full transition-all duration-500 w-[40%]"></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
-                  <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{t("trafficPolice")}</span>
-                  <span className="font-mono font-bold text-white shrink-0">10 Feeds</span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full transition-all duration-500 w-[33%]"></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
-                  <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{t("highwayPatrol")}</span>
-                  <span className="font-mono font-bold text-white shrink-0">5 Feeds</span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-400 rounded-full transition-all duration-500 w-[17%]"></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center text-[#7d8da3] mb-1 text-xs">
-                  <span className="font-medium text-slate-700 dark:text-gray-200 truncate mr-2">{t("coastalGram")}</span>
-                  <span className="font-mono font-bold text-white shrink-0">3 Feeds</span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-100 dark:bg-[#0a0e14] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-300 rounded-full transition-all duration-500 w-[10%]"></div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 

@@ -11,7 +11,6 @@ import PageSkeleton from "./components/PageSkeleton";
 import { alertService } from "./services/alertService";
 import { authService } from "./services/authService";
 import { auditService } from "./services/auditService";
-import { INITIAL_ALERTS } from "./data/alertsData";
 
 // Command-grid pages load on demand so the landing and login screens open fast
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
@@ -121,7 +120,7 @@ export default function App() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const [alerts, setAlerts] = useState(INITIAL_ALERTS);
+  const [alerts, setAlerts] = useState([]);
 
   const fetchAlerts = async () => {
     try {

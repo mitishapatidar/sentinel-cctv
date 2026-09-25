@@ -1,5 +1,4 @@
 import { supabase } from "./supabase";
-import { INITIAL_WATCHLIST } from "../data/watchlistData";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_API_URL || "http://127.0.0.1:8000";
 
@@ -39,9 +38,9 @@ export const watchlistService = {
       } catch (e) {}
     }
 
-    // 3. Fallback to INITIAL_WATCHLIST
-    if (!list || list.length === 0) {
-      list = entityType ? INITIAL_WATCHLIST.filter((w) => w.entity_type === entityType) : INITIAL_WATCHLIST;
+    // No backend or database reachable: only locally added entries (merged below) are shown
+    if (!list) {
+      list = [];
     }
 
     // Merge custom added items, deletions, and status overrides from local persistence

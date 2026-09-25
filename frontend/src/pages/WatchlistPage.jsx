@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { ShieldAlert, Plus, Trash2, CheckCircle2, Car, User, Search, RefreshCw, AlertCircle } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { watchlistService } from "../services/watchlistService";
-import { INITIAL_WATCHLIST } from "../data/watchlistData";
 
 export default function WatchlistPage() {
-  const [watchlist, setWatchlist] = useState(INITIAL_WATCHLIST);
+  const [watchlist, setWatchlist] = useState([]);
   const [activeTab, setActiveTab] = useState("vehicle");
   const [loading, setLoading] = useState(false);
 
