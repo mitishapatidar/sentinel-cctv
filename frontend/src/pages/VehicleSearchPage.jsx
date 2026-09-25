@@ -91,6 +91,10 @@ const createNumberedIcon = (number, isAlert = false) => {
   });
 };
 
+// Quick-target tags: only serious cases are highlighted, everything else stays neutral
+const TAG_SEVERE = "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30";
+const TAG_NEUTRAL = "text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10";
+
 export default function VehicleSearchPage({ initialPlate, onPlateSearched }) {
   const [query, setQuery] = useState(() => {
     try {
@@ -943,28 +947,28 @@ export default function VehicleSearchPage({ initialPlate, onPlateSearched }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
               {[
                 // Row 1
-                { plate: "GJ-01-AB-1234", tag: "Stolen Swift", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
-                { plate: "GJ-05-CD-5678", tag: "Amber Creta", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
-                { plate: "GJ-18-XY-9012", tag: "Hit & Run City", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
-                { plate: "GJ-06-ER-3456", tag: "Challan Defaulter", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
+                { plate: "GJ-01-AB-1234", tag: "Stolen Swift", badge: TAG_NEUTRAL },
+                { plate: "GJ-05-CD-5678", tag: "Amber Creta", badge: TAG_SEVERE },
+                { plate: "GJ-18-XY-9012", tag: "Hit & Run City", badge: TAG_NEUTRAL },
+                { plate: "GJ-06-ER-3456", tag: "Challan Defaulter", badge: TAG_NEUTRAL },
 
                 // Row 2
-                { plate: "GJ-03-GH-7890", tag: "Contraband Fortuner", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
-                { plate: "GJ-12-KL-4321", tag: "Carjacking Baleno", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
-                { plate: "GJ-15-PQ-2109", tag: "Armed Heist Seltos", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
-                { plate: "GJ-10-RS-6543", tag: "Stolen Enfield", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
+                { plate: "GJ-03-GH-7890", tag: "Contraband Fortuner", badge: TAG_SEVERE },
+                { plate: "GJ-12-KL-4321", tag: "Carjacking Baleno", badge: TAG_SEVERE },
+                { plate: "GJ-15-PQ-2109", tag: "Armed Heist Seltos", badge: TAG_SEVERE },
+                { plate: "GJ-10-RS-6543", tag: "Stolen Enfield", badge: TAG_NEUTRAL },
 
                 // Row 3
-                { plate: "GJ-08-TU-1098", tag: "Bolero Evader", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
-                { plate: "GJ-23-VW-5432", tag: "Snatching Activa", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
-                { plate: "GJ-27-MN-8765", tag: "Overload Brezza", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
-                { plate: "GJ-16-ZA-9876", tag: "Cloned Plate i20", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
+                { plate: "GJ-08-TU-1098", tag: "Bolero Evader", badge: TAG_NEUTRAL },
+                { plate: "GJ-23-VW-5432", tag: "Snatching Activa", badge: TAG_NEUTRAL },
+                { plate: "GJ-27-MN-8765", tag: "Overload Brezza", badge: TAG_NEUTRAL },
+                { plate: "GJ-16-ZA-9876", tag: "Cloned Plate i20", badge: TAG_NEUTRAL },
 
                 // Row 4
-                { plate: "GJ-02-BA-4589", tag: "Smuggling Scorpio", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
-                { plate: "GJ-04-DE-7712", tag: "Toll Evader", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
-                { plate: "GJ-14-KK-3390", tag: "Missing Eeco", badge: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" },
-                { plate: "GJ-09-PP-6211", tag: "Unregistered Thar", badge: "text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
+                { plate: "GJ-02-BA-4589", tag: "Smuggling Scorpio", badge: TAG_SEVERE },
+                { plate: "GJ-04-DE-7712", tag: "Toll Evader", badge: TAG_NEUTRAL },
+                { plate: "GJ-14-KK-3390", tag: "Missing Eeco", badge: TAG_NEUTRAL },
+                { plate: "GJ-09-PP-6211", tag: "Unregistered Thar", badge: TAG_NEUTRAL },
               ].map((t) => (
                 <button
                   key={t.plate}
