@@ -526,6 +526,54 @@ def toggle_watchlist_entry(item_id: str, payload: dict):
     res = supabase_api_request(f"watchlist?id=eq.{item_id}", method="PATCH", data=payload)
     return res or {"status": "updated"}
 
+@app.get("/api/vehicles/{plate}/sightings")
+def get_vehicle_sightings(plate: str):
+    """
+    Every ANPR sighting of a plate, oldest first, with camera location and watchlist entry.
+    Low-resolution plates are often only partly read, so detections that match on the trailing
+    number (and are close enough overall) are returned too, flagged as "partial".
+    """
+    import sys as _sys
+    root = str(Path(__file__).resolve().parent.parent)
+    if root not in _sys.path:
+        _sys.path.insert(0, root)
+    from ai_pipeline.watchlist_matcher import alnum, match_plate
+
+    target = alnum(plate)
+    if len(target) < 4:
+        raise HTTPException(status_code=400, detail="Plate too short")
+
+    select = "select=id,camera_id,plate_number,confidence,vehicle_type,detected_at,cameras(name,city,lat,lng)"
+    rows = supabase_api_request(
+        f"detections?{select}&plate_number=like.*{urllib.parse.quote(target[-4:])}&order=detected_at.asc&limit=500"
+    ) or []
+    sightings = []
+    for d in rows:
+        kind = match_plate(d.get("plate_number", ""), target)
+        if not kind:
+            continue
+        cam = d.get("cameras") or {}
+        sightings.append({
+            "camera_id": d["camera_id"],
+            "name": cam.get("name") or d["camera_id"],
+            "city": cam.get("city"),
+            "lat": cam.get("lat"),
+            "lng": cam.get("lng"),
+            "plate_read": d.get("plate_number"),
+            "confidence": d.get("confidence"),
+            "vehicle_type": d.get("vehicle_type"),
+            "detected_at": d.get("detected_at"),
+            "match": kind,
+        })
+
+    watch = None
+    for entry in supabase_api_request("watchlist?select=*&entity_type=eq.vehicle") or []:
+        if alnum(entry.get("identifier", "")) == target:
+            watch = entry
+            break
+    return {"plate": plate.upper(), "watchlist": watch, "sightings": sightings}
+
+
 @app.get("/api/detections")
 def get_detections(plate: Optional[str] = None, limit: int = 50):
     """Returns vehicle trajectory detections."""
