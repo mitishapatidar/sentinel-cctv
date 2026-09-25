@@ -14,6 +14,7 @@ import AuditLogsPage from "./pages/AuditLogsPage";
 import AlertToastNotification from "./components/AlertToastNotification";
 import { alertService } from "./services/alertService";
 import { authService } from "./services/authService";
+import { auditService } from "./services/auditService";
 import { INITIAL_ALERTS } from "./data/alertsData";
 
 export default function App() {
@@ -149,6 +150,7 @@ export default function App() {
     authService.getCurrentProfile().then((profile) => {
       if (!cancelled && profile) {
         setUser(profile);
+        auditService.setActor(profile);
         setView((prev) => (prev === "landing" ? "app" : prev));
       }
     });
@@ -159,11 +161,15 @@ export default function App() {
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
+    auditService.setActor(userData);
+    auditService.log("CONTROL_ROOM_LOGIN", `Session started (${userData.badgeId || "—"}, ${userData.department || "—"})`, "VERIFIED");
     setView("app");
     setActivePage("dashboard");
   };
 
   const handleLogout = async () => {
+    await auditService.log("CONTROL_ROOM_LOGOUT", "Session ended", "VERIFIED");
+    auditService.setActor(null);
     await authService.signOut();
     setView("landing");
   };

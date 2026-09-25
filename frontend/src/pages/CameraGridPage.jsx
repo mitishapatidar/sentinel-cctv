@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, Radio, Maximize2, Shield, Eye, RefreshCw, Play, Tv } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import HlsPlayer from "../components/HlsPlayer";
+import { auditService } from "../services/auditService";
 import { INITIAL_CAMERAS } from "../data/camerasData";
 
 export default function CameraGridPage() {
@@ -231,7 +232,10 @@ export default function CameraGridPage() {
                   )}
 
                   <button
-                    onClick={() => setActiveCamModal(cam)}
+                    onClick={() => {
+                      setActiveCamModal(cam);
+                      auditService.log("STREAM_VIEW", `${cam.id} (${cam.name || "HLS Stream"})`);
+                    }}
                     className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/80 hover:text-white hover:bg-black/90 backdrop-blur-xs transition-all cursor-pointer opacity-0 group-hover:opacity-100 z-30"
                     title="Maximize Stream"
                   >

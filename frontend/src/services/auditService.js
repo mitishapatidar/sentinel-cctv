@@ -1,6 +1,22 @@
 import { supabase } from "./supabase";
 
+// Officer attached to every audit event; set on login, cleared on logout.
+let currentActor = { operator: "anonymous", role: null };
+
 export const auditService = {
+  setActor(user) {
+    currentActor = user?.email
+      ? { operator: user.email, role: user.role || null }
+      : { operator: "anonymous", role: null };
+  },
+
+  /**
+   * Records an operator action for the current officer. Never throws, so logging can't break the UI.
+   */
+  log(action, target, status = "RECORDED") {
+    return this.logEvent({ ...currentActor, action, target, status });
+  },
+
   /**
    * Fetches official police officer interaction and access audit logs.
    */
@@ -9,7 +25,8 @@ export const auditService = {
       const { data, error } = await supabase
         .from("audit_logs")
         .select("*")
-        .order("timestamp", { ascending: false });
+        .order("timestamp", { ascending: false })
+        .limit(200);
       return { data, error };
     } catch (err) {
       return { data: null, error: err };

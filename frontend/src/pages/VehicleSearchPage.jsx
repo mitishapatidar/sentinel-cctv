@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Polyline, Popup, GeoJSON, useMap } fro
 import L from "leaflet";
 import gujaratBorder from "../data/gujaratBorder.json";
 import { supabase } from "../supabaseClient";
+import { auditService } from "../services/auditService";
 
 // Real Google Maps & OpenStreetMap tile layers (Identical to Dashboard GIS engine)
 const GOOGLE_MAP_LAYERS = {
@@ -788,6 +789,7 @@ export default function VehicleSearchPage({ initialPlate }) {
   const handleSearch = async (plateToSearch) => {
     const target = (plateToSearch || query).trim().toUpperCase();
     setSearching(true);
+    auditService.log("ANPR_SEARCH", `Vehicle Query: ${target}`, "CHAIN_OF_CUSTODY_SECURED");
 
     try {
       // 1. Try querying real Supabase detections table

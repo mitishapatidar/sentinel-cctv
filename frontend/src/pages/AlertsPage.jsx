@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { alertService } from "../services/alertService";
+import { auditService } from "../services/auditService";
 import { INITIAL_ALERTS } from "../data/alertsData";
 
 export default function AlertsPage({ setActivePage, onTrackVehicle }) {
@@ -84,6 +85,7 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
 
     // Update via alertService (syncs to localStorage, backend API proxy, and Supabase)
     await alertService.updateStatus(id, newStatus);
+    auditService.log(`ALERT_${String(newStatus).toUpperCase()}`, `Alert #${id}`, "ACTION_COMMITTED");
     window.dispatchEvent(new Event("sentinel-alerts-updated"));
   };
 
@@ -93,6 +95,7 @@ export default function AlertsPage({ setActivePage, onTrackVehicle }) {
 
     // Delete via alertService (syncs to localStorage, backend API, and Supabase)
     await alertService.deleteAlert(id);
+    auditService.log("ALERT_DELETE", `Alert #${id}`, "ACTION_COMMITTED");
     window.dispatchEvent(new Event("sentinel-alerts-updated"));
   };
 
