@@ -107,9 +107,6 @@ export default function DashboardPage({ setActivePage }) {
       <div className="border-b border-[#1e2a3a] px-5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#111823] shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[11px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              Live GIS Command
-            </span>
             <span className="text-[11px] uppercase font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
               <Globe className="h-3 w-3" /> Real Google Maps Engine
             </span>

@@ -322,6 +322,8 @@ html:not(.dark) .bg-black,
 html:not(.dark) .bg-black *,
 html:not(.dark) .bg-gradient-to-br.from-blue-600,
 html:not(.dark) .bg-gradient-to-br.from-blue-600 *,
+html:not(.dark) .bg-gradient-to-r.from-blue-600,
+html:not(.dark) .bg-gradient-to-r.from-blue-600 *,
 html:not(.dark) .bg-gradient-to-b.from-blue-900\/60,
 html:not(.dark) .bg-gradient-to-b.from-blue-900\/60 * {
   color: #ffffff !important;

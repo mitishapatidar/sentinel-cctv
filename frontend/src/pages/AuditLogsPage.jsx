@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ShieldCheck, Lock, FileText, Download, UserCheck, AlertCircle, Clock, RefreshCw } from "lucide-react";
+import { Download, AlertCircle, Clock, RefreshCw } from "lucide-react";
 import { auditService, AUDIT_LOGGING_ENABLED } from "../services/auditService";
 import { toast } from "../utils/toast";
 
@@ -66,12 +66,6 @@ export default function AuditLogsPage() {
       {/* Header */}
       <div className="border-b border-[#1e2a3a] px-6 py-4 bg-[#111823] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-              <ShieldCheck className="h-3 w-3" />
-              DPDP Act 2023 & Indian Evidence Act Compliant
-            </span>
-          </div>
           <h1 className="text-xl font-bold text-white mt-1 tracking-wide">Surveillance Audit & Chain of Custody Trail</h1>
           <p className="text-xs text-[#7d8da3] mt-0.5">Immutable audit logging for court evidence admissibility and unauthorized breach prevention</p>
         </div>
@@ -87,29 +81,6 @@ export default function AuditLogsPage() {
 
       {/* Security Architecture Box */}
       <div className="p-6 space-y-6">
-        <div className="p-4 rounded-2xl bg-[#0d141f] border border-[#1e2a3a] grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="flex items-start gap-3">
-            <Lock className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-white">Encryption at Rest & In-Transit</p>
-              <p className="text-[#7d8da3] text-[12px] mt-0.5">AES-256 for biometric/plate records, TLS 1.3 for HLS & RTSP relays.</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <UserCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-white">Zero Trust RBAC Policy</p>
-              <p className="text-[#7d8da3] text-[12px] mt-0.5">Strict role separation preventing cross-department feed leaks.</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <FileText className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-white">Section 65B Certificate Ready</p>
-              <p className="text-[#7d8da3] text-[12px] mt-0.5">Automated timestamp hash verification for court submissions.</p>
-            </div>
-          </div>
-        </div>
 
         {/* Audit Log Table */}
         <div className="bg-[#111823] border border-[#1e2a3a] rounded-2xl overflow-hidden shadow-xl">

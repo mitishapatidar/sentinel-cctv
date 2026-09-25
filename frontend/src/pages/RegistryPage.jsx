@@ -83,9 +83,6 @@ export default function RegistryPage({ setActivePage }) {
             <span className="text-[11px] uppercase font-bold px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
               Model 1: Mandatory Asset Registry
             </span>
-            <span className="text-[11px] uppercase font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              30 / 30 Online
-            </span>
           </div>
           <h1 className="text-xl font-bold text-white mt-1 tracking-wide flex items-center gap-2">
             <Server className="h-5 w-5 text-blue-400" />
