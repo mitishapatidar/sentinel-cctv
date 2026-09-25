@@ -130,11 +130,11 @@ export default function Navbar({
         <div className="relative" ref={langMenuRef}>
           <button
             onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-            className="flex items-center gap-2 bg-[#0a0e14] hover:bg-[#16233b] border border-[#1e2a3a] px-3 py-1.5 rounded-xl text-xs text-white transition-all cursor-pointer shadow-inner"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#1e2a3a] hover:bg-[#16233b] text-xs text-[#cad5e2] transition-colors cursor-pointer"
             title="Change language / ભાષા બદલો / भाषा बदलें"
           >
-            <Globe className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-            <span className="font-semibold">{currentLang.label}</span>
+            <Globe className="h-3.5 w-3.5 text-[#7d8da3] shrink-0" />
+            <span className="font-medium">{currentLang.label}</span>
             <ChevronDown className={`h-3 w-3 text-[#7d8da3] transition-transform duration-200 ${langDropdownOpen ? "rotate-180 text-blue-400" : ""}`} />
           </button>
 
@@ -172,11 +172,7 @@ export default function Navbar({
         {/* Audio Alert Chime Mute/Unmute Toggle */}
         <button
           onClick={toggleAudioMute}
-          className={`p-2 rounded-xl border transition-all cursor-pointer ${
-            audioMuted
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-              : "border-[#1e2a3a] bg-[#0a0e14] text-[#7d8da3] hover:text-white hover:border-blue-500/50"
-          }`}
+          className="h-9 w-9 flex items-center justify-center rounded-lg border border-[#1e2a3a] text-[#7d8da3] hover:text-white hover:bg-[#16233b] transition-colors cursor-pointer"
           title={audioMuted ? "Unmute Alert Chimes (Currently Muted)" : "Mute Alert Chimes (Currently Active)"}
         >
           {audioMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
@@ -185,12 +181,12 @@ export default function Navbar({
         {/* Alert notification bell */}
         <button
           onClick={() => setActivePage("alerts")}
-          className="relative p-2 rounded-xl border border-[#1e2a3a] bg-[#0a0e14] text-[#7d8da3] hover:text-white hover:border-blue-500/50 transition-all cursor-pointer"
+          className="relative h-9 w-9 flex items-center justify-center rounded-lg border border-[#1e2a3a] text-[#7d8da3] hover:text-white hover:bg-[#16233b] transition-colors cursor-pointer"
           title={t("alerts")}
         >
           <Bell className="h-4 w-4" />
           {alertCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 rounded-full bg-red-600 text-[11px] font-bold text-white flex items-center justify-center animate-pulse">
+            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 rounded-full bg-red-600 text-[11px] font-bold text-white flex items-center justify-center">
               {alertCount}
             </span>
           )}
@@ -203,27 +199,21 @@ export default function Navbar({
               setProfileDropdownOpen(!profileDropdownOpen);
               setShowLogoutConfirm(false);
             }}
-            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
-              profileDropdownOpen
-                ? "border-blue-500 bg-blue-500/20 text-white shadow-lg shadow-blue-500/20"
-                : "border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-white"
+            className={`flex items-center gap-2 h-9 pl-1.5 pr-2.5 rounded-lg border border-[#1e2a3a] transition-colors cursor-pointer ${
+              profileDropdownOpen ? "bg-[#16233b]" : "hover:bg-[#16233b]"
             }`}
             title="Officer Command Profile & Options"
           >
-            {/* Avatar with Live Online Status Pulse */}
-            <div className="relative shrink-0">
-              <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xs font-bold font-mono shadow-sm border border-blue-400/40">
-                {user?.roleKey === "admin" ? "DC" : "OP"}
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-[#111823]"></span>
+            <div className="h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-[11px] font-semibold shrink-0">
+              {(user?.email || "O").charAt(0).toUpperCase()}
             </div>
 
             {/* Officer Details */}
             <div className="hidden md:block text-left leading-tight">
-              <p className="text-xs font-bold text-white tracking-wide truncate max-w-[130px]">
+              <p className="text-xs font-semibold text-white truncate max-w-[170px]">
                 {user?.email ? user.email.split("@")[0] : t("officer")}
               </p>
-              <p className="text-[11px] font-medium text-blue-400 truncate max-w-[130px]">
+              <p className="text-[11px] text-[#7d8da3] truncate max-w-[170px]">
                 {user?.role || t("adminRole")}
               </p>
             </div>

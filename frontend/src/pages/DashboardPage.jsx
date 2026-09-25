@@ -114,13 +114,6 @@ export default function DashboardPage({ setActivePage }) {
           <h1 className="text-lg font-bold text-white tracking-wide">{t("commandDashboard")}</h1>
           <p className="text-[12px] text-[#7d8da3]">{t("statewideSurveillance")}</p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#1e2a3a] bg-[#0a0e14] shadow-inner">
-            <Radio className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-            <span className="text-xs text-[#7d8da3]">{t("liveFeeds")}</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">30/30 {t("online")}</span>
-          </div>
-        </div>
       </div>
 
       {/* Main Grid: Map (Left) + Stats & Feeds (Right) - Fits 100% of viewport without scrolling */}
